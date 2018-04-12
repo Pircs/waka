@@ -397,7 +397,7 @@ func (my *actorT) FourGarb(player *playerT, ev *four_proto.FourGrab) {
 		player.InsideFour = 0
 		return
 	}
-	if ev.Number != 0 || ev.Number != 1 || ev.Number != 2 || ev.Number != 4 || ev.Number != 8 {
+	if ev.Number != 0 && ev.Number != 1 && ev.Number != 2 && ev.Number != 4 && ev.Number != 8 {
 		log.WithFields(logrus.Fields{
 			"player": player.Player,
 			"Number": ev.Number,
@@ -410,7 +410,7 @@ func (my *actorT) FourGarbOfFixedBanker(player *playerT, ev *four_proto.FourGrab
 	if player.InsideFour == 0 {
 		log.WithFields(logrus.Fields{
 			"player": player.Player,
-		}).Warnln("cut but not in room")
+		}).Warnln("Garb but not in room")
 		return
 	}
 
@@ -419,7 +419,7 @@ func (my *actorT) FourGarbOfFixedBanker(player *playerT, ev *four_proto.FourGrab
 		log.WithFields(logrus.Fields{
 			"player":  player.Player,
 			"room_id": player.InsideFour,
-		}).Warnln("cut but room not found")
+		}).Warnln("Garb but room not found")
 		player.InsideFour = 0
 		return
 	}
@@ -431,7 +431,7 @@ func (my *actorT) FourSetMultiple(player *playerT, ev *four_proto.FourSetMultipl
 	if player.InsideFour == 0 {
 		log.WithFields(logrus.Fields{
 			"player": player.Player,
-		}).Warnln("cut but not in room")
+		}).Warnln("SetMultiple but not in room")
 		return
 	}
 
@@ -440,11 +440,11 @@ func (my *actorT) FourSetMultiple(player *playerT, ev *four_proto.FourSetMultipl
 		log.WithFields(logrus.Fields{
 			"player":  player.Player,
 			"room_id": player.InsideFour,
-		}).Warnln("cut but room not found")
+		}).Warnln("SetMultiple but room not found")
 		player.InsideFour = 0
 		return
 	}
-	if ev.Multiple != 1 || ev.Multiple != 2 || ev.Multiple != 3 || ev.Multiple != 5 {
+	if ev.Multiple != 1 && ev.Multiple != 2 && ev.Multiple != 3 && ev.Multiple != 5 {
 		log.WithFields(logrus.Fields{
 			"player":   player.Player,
 			"Multiple": ev.Multiple,

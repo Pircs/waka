@@ -145,6 +145,13 @@ func (my *actorT) sendFourRequireSetMultiple(player database.Player) {
 	my.send(player, &four_proto.FourRequireSetMultiple{})
 }
 
+func (my *actorT) sendFourSetMultipleSuccess(player database.Player, operator database.Player, multiple int32) {
+	my.send(player, &four_proto.FourSetMultipleSuccess{
+		PlayerId: int32(operator),
+		Multiple: multiple,
+	})
+}
+
 func (my *actorT) sendFourReceivedMessage(player database.Player, sender database.Player, messageType int32, text string) {
 	my.send(player, &four_proto.FourReceivedMessage{int32(sender), &four_proto.FourMessage{messageType, text}})
 }
@@ -171,6 +178,12 @@ func (my *actorT) sendFourDismissFinally(player database.Player, dismiss bool, r
 }
 
 // --------------------------------------------------------
+
+func (my *actorT) sendFourSetMultipleSuccessForAll(room fourRoomT, operator database.Player, multiple int32) {
+	for _, player := range room.GetPlayers() {
+		my.sendFourSetMultipleSuccess(player, operator, multiple)
+	}
+}
 
 func (my *actorT) sendFourUpdateRoomForAll(room fourRoomT) {
 	for _, player := range room.GetPlayers() {

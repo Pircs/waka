@@ -397,7 +397,9 @@ func (r *fourGrabBankerRoomT) Recover(player *playerT) {
 	if playerData, being := r.Players[player.Player]; being {
 		playerData.Round.Sent = false
 	}
-
+	if r.Step == "commit_pokers" {
+		r.Hall.sendFourDeal(player.Player, r.Players[player.Player].Round.Pokers)
+	}
 	r.Hall.sendFourUpdateRoomForAll(r)
 	if r.Gaming {
 		r.Hall.sendFourUpdateRound(player.Player, r)
@@ -702,6 +704,7 @@ func (r *fourGrabBankerRoomT) FourSetMultiple(player *playerT, multiple int32) {
 	if r.Gaming {
 		r.Players[player.Player].Round.Multiple = multiple
 		r.Players[player.Player].Round.MultipleCommitted = true
+		r.Hall.sendFourSetMultipleSuccessForAll(r, player.Player, multiple)
 		r.Hall.sendFourUpdateRoundForAll(r)
 
 		r.Loop()
@@ -741,7 +744,7 @@ func (r *fourGrabBankerRoomT) loopStart() bool {
 
 	r.Hall.sendFourStartedForAll(r, r.RoundNumber)
 
-	r.loop = r.loopGrab
+	r.loop = r.loopDeal
 
 	var king database.Player
 	for _, k := range r.King {
@@ -796,23 +799,24 @@ func (r *fourGrabBankerRoomT) loopGrab() bool {
 			r.Hall.sendFourGrabBankerCountdownForAll(r, number)
 		},
 		func() {
-			var number int32
-			var banker database.Player
+			//var number int32
+			//var banker database.Player
 			for _, player := range r.Players {
 				if !player.Round.GrabCommitted {
 					player.Round.Grab = false
 					player.Round.GrabCommitted = true
+					player.Round.ContinueWithCommitted = true
 				}
-				if player.Round.Grab {
-					number += 1
-					banker = player.Player
-				}
+				/*		if player.Round.Grab {
+						number += 1
+						banker = player.Player
+					}*/
 			}
-			if number == 1 {
-				r.Banker = banker
-				r.Hall.sendFourUpdateRoomForAll(r)
-				r.loop = r.loopSetMultiple
-			}
+			/*			if number == 1 {
+						r.Banker = banker
+						r.Hall.sendFourUpdateRoomForAll(r)
+						r.loop = r.loopSetMultiple
+					}*/
 		},
 		r.Loop,
 	)
@@ -822,7 +826,11 @@ func (r *fourGrabBankerRoomT) loopGrab() bool {
 
 func (r *fourGrabBankerRoomT) loopGrabContinue() bool {
 	finally := true
+	var grabNumber int
 	for _, player := range r.Players {
+		if player.Round.Grab {
+			grabNumber += 1
+		}
 		if !player.Round.GrabCommitted {
 			finally = false
 			if !player.Round.Sent {
@@ -836,9 +844,17 @@ func (r *fourGrabBankerRoomT) loopGrabContinue() bool {
 	if !finally {
 		return false
 	}
+	log.WithFields(logrus.Fields{
+		"grabNumber": grabNumber,
+	}).Warnln("grabNumber")
+	if grabNumber == 1 {
+		r.tick = nil
+		r.loop = r.loopGrabSelect
+	} else {
+		r.tick = nil
+		r.loop = r.loopGrabAnimation
+	}
 
-	r.tick = nil
-	r.loop = r.loopGrabAnimation
 	return true
 }
 
@@ -892,19 +908,27 @@ func (r *fourGrabBankerRoomT) loopGrabAnimationContinue() bool {
 func (r *fourGrabBankerRoomT) loopGrabSelect() bool {
 	var candidates []database.Player
 	var noOneGarb []database.Player
+	max := int32(math.MinInt32)
 	for _, player := range r.Players {
 		if player.Round.Grab {
-			max := player.Round.GrabTimes
 			if player.Round.GrabTimes > max {
-				candidates = candidates[0:1]
-				candidates[0] = player.Player
+				if len(candidates) > 0 {
+					candidates = candidates[0:0]
+					candidates = append(candidates, player.Player)
+				} else {
+					candidates = append(candidates, player.Player)
+				}
+				max = player.Round.GrabTimes
 			} else if player.Round.GrabTimes == max {
 				candidates = append(candidates, player.Player)
 			}
 		}
 		noOneGarb = append(noOneGarb, player.Player)
 	}
-
+	log.WithFields(logrus.Fields{
+		"maxGarb": max,
+		"len":     len(candidates),
+	}).Warnln("maxGarb")
 	if len(candidates) > 0 {
 		r.Banker = candidates[rand.Int()%len(candidates)]
 	} else {
@@ -920,8 +944,11 @@ func (r *fourGrabBankerRoomT) loopSetMultiple() bool {
 	r.Step = "set_multiple"
 	for _, player := range r.Players {
 		player.Round.Sent = false
+		player.Round.MultipleCommitted = false
 		player.Round.ContinueWithCommitted = false
 	}
+	r.Players[r.Banker].Round.MultipleCommitted = true
+	r.Players[r.Banker].Round.Multiple = 1
 	r.Hall.sendFourUpdateRoundForAll(r)
 
 	r.loop = r.loopSetMultipleContinue
@@ -935,6 +962,7 @@ func (r *fourGrabBankerRoomT) loopSetMultiple() bool {
 				if !player.Round.MultipleCommitted {
 					player.Round.Multiple = 1
 					player.Round.MultipleCommitted = true
+					player.Round.ContinueWithCommitted = true
 				}
 			}
 		},
@@ -971,9 +999,10 @@ func (r *fourGrabBankerRoomT) loopCommitPokers() bool {
 	r.Step = "commit_pokers"
 	for _, player := range r.Players {
 		player.Round.Sent = false
+		player.Round.PokersCommitted = false
 		player.Round.ContinueWithCommitted = false
 	}
-
+	r.Hall.sendFourUpdateRoundForAll(r)
 	r.loop = r.loopCommitPokersContinue
 
 	return true
@@ -986,7 +1015,6 @@ func (r *fourGrabBankerRoomT) loopCommitPokersContinue() bool {
 		if !player.Round.PokersCommitted {
 			finally = false
 			if !player.Round.Sent {
-				//r.Hall.sendFourDeal(player.Player, player.Round.Pokers)
 				player.Round.Sent = true
 			}
 		}
@@ -1105,10 +1133,16 @@ func (r *fourGrabBankerRoomT) loopSettle() bool {
 		return players[i].Player < players[j].Player
 	})
 	banker := &r.Players[r.Banker].Round
+	log.WithFields(logrus.Fields{
+		"GrabTimes": banker.GrabTimes,
+	}).Warnln("GrabTimes")
 	for i := 0; i < len(players); i++ {
 		var player *fourGrabBankerRoomPlayerRoundT
 		if players[i].Player != r.Banker {
 			player = &players[i].Round
+			log.WithFields(logrus.Fields{
+				"Multiple": player.Multiple,
+			}).Warnln("Multiple")
 		} else {
 			continue
 		}
@@ -1117,7 +1151,7 @@ func (r *fourGrabBankerRoomT) loopSettle() bool {
 			banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind,
 			banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind < player.PokersWeightBehind:
 			banker.PokersPoints += (player.PokersScoreFront + player.PokersScoreBehind) * (-1) * player.Multiple * banker.GrabTimes
-			player.PokersPoints += player.PokersScoreFront + player.PokersScoreBehind*player.Multiple*banker.GrabTimes
+			player.PokersPoints += (player.PokersScoreFront + player.PokersScoreBehind) * player.Multiple * banker.GrabTimes
 
 		case banker.PokersWeightFront == player.PokersWeightFront && banker.PokersWeightBehind > player.PokersWeightBehind,
 			banker.PokersWeightFront > player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind,
@@ -1160,7 +1194,7 @@ func (r *fourGrabBankerRoomT) loopSettle() bool {
 			Pokers:        append(append([]string{}, player.Round.PokersFront...), player.Round.PokersBehind...),
 			PokersPattern: append(append([]string{}, player.Round.PokersPatternFront), player.Round.PokersPatternBehind),
 			Score:         player.Round.PokersPoints,
-			Number:        player.Round.Multiple,
+			Number:        player.Round.Multiple * r.Players[r.Banker].Round.GrabTimes,
 		})
 	}
 

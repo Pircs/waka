@@ -564,7 +564,17 @@ message FourSetMultiple{
 // @receive
 message FourRequireSetMultiple{}
 
-// @comments 现价设置倍数倒计时
+// @comments 闲家设置倍数成功
+// @receive
+message FourSetMultipleSuccess{
+    // 玩家 ID
+    int32 player_id = 1;
+    // 选择倍数
+    int32 multiple =2 ;
+
+}
+
+// @comments 闲家设置倍数倒计时
 // @receiveb
 message FourSetMultipleCountdown {
     // 倒计时
@@ -693,6 +703,8 @@ message FourDeal {
     // 手牌
     repeated string pokers = 1;
 }
+
+
 
 // @comments 提交配牌
 // @post

@@ -97,30 +97,35 @@ func GetPattern(mahjongs []string) (weight int32, score int32, pattern string, e
 		pattern = "烂对"
 
 	case
-		strings.HasPrefix(mahjongs[0], "bamboo_9") && strings.HasPrefix(mahjongs[1], "white"):
+		strings.HasPrefix(mahjongs[0], "bamboo_9") && strings.HasPrefix(mahjongs[1], "white"),
+		strings.HasPrefix(mahjongs[0], "white") && strings.HasPrefix(mahjongs[1], "bamboo_9"):
 		value = 11
 		score = 11
 		pattern = "天九王"
 	case
-		strings.HasPrefix(mahjongs[0], "dot_8") && strings.HasPrefix(mahjongs[1], "white"):
+		strings.HasPrefix(mahjongs[0], "dot_8") && strings.HasPrefix(mahjongs[1], "white"),
+		strings.HasPrefix(mahjongs[0], "white") && strings.HasPrefix(mahjongs[1], "dot_8"):
 		value = 10
 		rank = 9
 		score = 10
 		pattern = "天杠"
 	case
-		strings.HasPrefix(mahjongs[0], "bamboo_8") && strings.HasPrefix(mahjongs[1], "white"):
+		strings.HasPrefix(mahjongs[0], "bamboo_8") && strings.HasPrefix(mahjongs[1], "white"),
+		strings.HasPrefix(mahjongs[0], "white") && strings.HasPrefix(mahjongs[1], "bamboo_8"):
 		value = 10
 		rank = 8
 		score = 10
 		pattern = "天杠"
 	case
-		strings.HasPrefix(mahjongs[0], "dot_8") && strings.HasPrefix(mahjongs[1], "dot_2"):
+		strings.HasPrefix(mahjongs[0], "dot_8") && strings.HasPrefix(mahjongs[1], "dot_2"),
+		strings.HasPrefix(mahjongs[0], "dot_2") && strings.HasPrefix(mahjongs[1], "dot_8"):
 		value = 10
 		rank = 7
 		score = 10
 		pattern = "地杠"
 	case
-		strings.HasPrefix(mahjongs[0], "bamboo_8") && strings.HasPrefix(mahjongs[1], "dot_2"):
+		strings.HasPrefix(mahjongs[0], "bamboo_8") && strings.HasPrefix(mahjongs[1], "dot_2"),
+		strings.HasPrefix(mahjongs[0], "dot_2") && strings.HasPrefix(mahjongs[1], "bamboo_8"):
 		value = 10
 		rank = 6
 		score = 10

@@ -82,7 +82,7 @@ func (my *actorT) TokenLogin(ev *four_proto.TokenLogin) {
 	}).Debugln("token login")
 
 	player, being, err := database.QueryPlayerByToken(ev.GetToken())
-	if err != nil {
+	if err != nil || !being {
 		my.log.WithFields(logrus.Fields{
 			"token": ev.GetToken(),
 			"err":   err,
@@ -90,10 +90,10 @@ func (my *actorT) TokenLogin(ev *four_proto.TokenLogin) {
 		my.conn.Tell(&session_message.Send{&four_proto.LoginFailed{0}})
 		return
 	} else {
-		err = database.UpdatePlayerLoginLastAt(player.Id)
-		if err != nil {
+		err1 := database.UpdatePlayerLoginLastAt(player.Id)
+		if err1 != nil {
 			my.log.WithFields(logrus.Fields{
-				"err": err,
+				"err": err1,
 			}).Warnln("Update player LoginLastAt  failed")
 			my.conn.Tell(&session_message.Send{&four_proto.LoginFailed{0}})
 			return

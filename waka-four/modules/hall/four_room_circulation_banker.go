@@ -678,8 +678,8 @@ func (r *fourCirculationBankerRoomT) FourSetMultiple(player *playerT, multiple i
 	if r.Gaming {
 		r.Players[player.Player].Round.Multiple = multiple
 		r.Players[player.Player].Round.MultipleCommitted = true
+		r.Hall.sendFourSetMultipleSuccessForAll(r, player.Player, multiple)
 		r.Hall.sendFourUpdateRoundForAll(r)
-
 		r.Loop()
 	}
 }
@@ -974,28 +974,28 @@ func (r *fourCirculationBankerRoomT) loopSettle() bool {
 		case banker.PokersWeightFront == player.PokersWeightFront && banker.PokersWeightBehind < player.PokersWeightBehind,
 			banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind,
 			banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind < player.PokersWeightBehind:
-			banker.PokersPoints += (player.PokersScoreFront + player.PokersScoreBehind) * (-1) * player.Multiple
-			player.PokersPoints += player.PokersScoreFront + player.PokersScoreBehind*player.Multiple
+			banker.PokersPoints += (player.PokersScoreFront + player.PokersScoreBehind) * (-1) * player.Multiple * r.Option.Rate
+			player.PokersPoints += (player.PokersScoreFront + player.PokersScoreBehind) * player.Multiple * r.Option.Rate
 
 		case banker.PokersWeightFront == player.PokersWeightFront && banker.PokersWeightBehind > player.PokersWeightBehind,
 			banker.PokersWeightFront > player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind,
 			banker.PokersWeightFront > player.PokersWeightFront && banker.PokersWeightBehind > player.PokersWeightBehind:
-			banker.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * player.Multiple
-			player.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * (-1) * player.Multiple
+			banker.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * player.Multiple * r.Option.Rate
+			player.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * (-1) * player.Multiple * r.Option.Rate
 
 		case banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind > player.PokersWeightBehind:
-			banker.PokersPoints += player.PokersScoreFront * (-1) * player.Multiple
-			player.PokersPoints += player.PokersScoreFront * player.Multiple
-			banker.PokersPoints += banker.PokersScoreBehind * player.Multiple
-			player.PokersPoints += banker.PokersScoreBehind * (-1) * player.Multiple
+			banker.PokersPoints += player.PokersScoreFront * (-1) * player.Multiple * r.Option.Rate
+			player.PokersPoints += player.PokersScoreFront * player.Multiple * r.Option.Rate
+			banker.PokersPoints += banker.PokersScoreBehind * player.Multiple * r.Option.Rate
+			player.PokersPoints += banker.PokersScoreBehind * (-1) * player.Multiple * r.Option.Rate
 		case banker.PokersWeightFront > player.PokersWeightFront && banker.PokersWeightBehind < player.PokersWeightBehind:
-			banker.PokersPoints += banker.PokersScoreFront * player.Multiple
-			player.PokersPoints += banker.PokersScoreFront * (-1) * player.Multiple
-			banker.PokersPoints += player.PokersScoreBehind * (-1) * player.Multiple
-			player.PokersPoints += player.PokersScoreBehind * player.Multiple
+			banker.PokersPoints += banker.PokersScoreFront * player.Multiple * r.Option.Rate
+			player.PokersPoints += banker.PokersScoreFront * (-1) * player.Multiple * r.Option.Rate
+			banker.PokersPoints += player.PokersScoreBehind * (-1) * player.Multiple * r.Option.Rate
+			player.PokersPoints += player.PokersScoreBehind * player.Multiple * r.Option.Rate
 		case banker.PokersWeightFront == player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind:
-			banker.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * player.Multiple
-			player.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * (-1) * player.Multiple
+			banker.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * player.Multiple * r.Option.Rate
+			player.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * (-1) * player.Multiple * r.Option.Rate
 		}
 	}
 
