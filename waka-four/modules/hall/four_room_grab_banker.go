@@ -403,6 +403,14 @@ func (r *fourGrabBankerRoomT) Recover(player *playerT) {
 	r.Hall.sendFourUpdateRoomForAll(r)
 	if r.Gaming {
 		r.Hall.sendFourUpdateRound(player.Player, r)
+		SetMultiplePlayers := []*four_proto.FourSetMultipleSuccess_MultiplePlayers{}
+		for _, player := range r.Players {
+			SetMultiplePlayers = append(SetMultiplePlayers, &four_proto.FourSetMultipleSuccess_MultiplePlayers{
+				Multiple: player.Round.Multiple,
+				PlayerId: int32(player.Player),
+			})
+		}
+		r.Hall.sendFourSetMultipleSuccess(player.Player, SetMultiplePlayers)
 		r.Loop()
 	}
 }
@@ -704,7 +712,14 @@ func (r *fourGrabBankerRoomT) FourSetMultiple(player *playerT, multiple int32) {
 	if r.Gaming {
 		r.Players[player.Player].Round.Multiple = multiple
 		r.Players[player.Player].Round.MultipleCommitted = true
-		r.Hall.sendFourSetMultipleSuccessForAll(r, player.Player, multiple)
+		SetMultiplePlayers := []*four_proto.FourSetMultipleSuccess_MultiplePlayers{}
+		for _, player := range r.Players {
+			SetMultiplePlayers = append(SetMultiplePlayers, &four_proto.FourSetMultipleSuccess_MultiplePlayers{
+				Multiple: player.Round.Multiple,
+				PlayerId: int32(player.Player),
+			})
+		}
+		r.Hall.sendFourSetMultipleSuccessForAll(r, SetMultiplePlayers)
 		r.Hall.sendFourUpdateRoundForAll(r)
 
 		r.Loop()
@@ -778,10 +793,28 @@ func (r *fourGrabBankerRoomT) loopDeal() bool {
 			player.Round.Pokers = roundMahjong[player.Player]
 		}
 	}
-
-	r.loop = r.loopGrab
-
+	for _, player := range r.Players {
+		r.Hall.sendFourDeal(player.Player, player.Round.Pokers)
+	}
+	if r.RoundNumber == 1 {
+		r.loop = r.loopTransition
+	} else {
+		r.loop = r.loopGrab
+	}
 	return true
+}
+
+func (r *fourGrabBankerRoomT) loopTransition() bool {
+	r.tick = buildTickNumber(
+		1,
+		func(number int32) {
+		},
+		func() {
+			r.loop = r.loopGrab
+		},
+		r.Loop,
+	)
+	return false
 }
 
 func (r *fourGrabBankerRoomT) loopGrab() bool {
@@ -799,28 +832,27 @@ func (r *fourGrabBankerRoomT) loopGrab() bool {
 			r.Hall.sendFourGrabBankerCountdownForAll(r, number)
 		},
 		func() {
-			//var number int32
-			//var banker database.Player
+			var number int32
+			var banker database.Player
 			for _, player := range r.Players {
 				if !player.Round.GrabCommitted {
 					player.Round.Grab = false
 					player.Round.GrabCommitted = true
 					player.Round.ContinueWithCommitted = true
 				}
-				/*		if player.Round.Grab {
-						number += 1
-						banker = player.Player
-					}*/
+				if player.Round.Grab {
+					number += 1
+					banker = player.Player
+				}
 			}
-			/*			if number == 1 {
-						r.Banker = banker
-						r.Hall.sendFourUpdateRoomForAll(r)
-						r.loop = r.loopSetMultiple
-					}*/
+			if number == 1 {
+				r.Banker = banker
+				r.Hall.sendFourUpdateRoomForAll(r)
+				r.loop = r.loopSetMultiple
+			}
 		},
 		r.Loop,
 	)
-
 	return true
 }
 
@@ -835,7 +867,6 @@ func (r *fourGrabBankerRoomT) loopGrabContinue() bool {
 			finally = false
 			if !player.Round.Sent {
 				r.Hall.sendFourRequireGrabBanker(player.Player)
-				r.Hall.sendFourDeal(player.Player, player.Round.Pokers)
 				player.Round.Sent = true
 			}
 		}
@@ -1261,6 +1292,76 @@ func (r *fourGrabBankerRoomT) loopTransfer() bool {
 	}
 
 	r.Hall.sendFourStartedForAll(r, r.RoundNumber)
+
+	r.loop = r.loopCut
+
+	return true
+}
+
+func (r *fourGrabBankerRoomT) loopCut() bool {
+	r.Step = "cut_continue"
+	for _, player := range r.Players {
+		player.Round.Sent = false
+	}
+	r.CutCommitted = false
+
+	r.loop = r.loopCutContinue
+
+	return true
+}
+
+func (r *fourGrabBankerRoomT) loopCutContinue() bool {
+	finally := true
+	for _, player := range r.Players {
+		if !r.CutCommitted {
+			finally = false
+			if !player.Round.Sent {
+				r.Hall.sendFourRequireCut(player.Player, player.Player == r.Cutter)
+				player.Round.Sent = true
+			}
+		}
+	}
+
+	if !finally {
+		return false
+	}
+
+	r.loop = r.loopCutAnimation
+
+	return true
+}
+
+func (r *fourGrabBankerRoomT) loopCutAnimation() bool {
+	r.Step = "cut_animation_continue"
+	for _, player := range r.Players {
+		player.Round.Sent = false
+		player.Round.ContinueWithCommitted = false
+	}
+
+	r.loop = r.loopCutAnimationContinue
+
+	return true
+}
+
+func (r *fourGrabBankerRoomT) loopCutAnimationContinue() bool {
+	finally := true
+	for _, player := range r.Players {
+		updated := player.Round.Sent
+		if !player.Round.ContinueWithCommitted {
+			finally = false
+			if !player.Round.Sent {
+				r.Hall.sendFourRequireCutAnimation(player.Player, r.CutPos)
+				player.Round.Sent = true
+			}
+		}
+		if !updated {
+			r.Hall.sendFourUpdateContinueWithStatus(player.Player, r)
+		}
+	}
+
+	if !finally {
+		return false
+	}
 
 	r.loop = r.loopDeal
 

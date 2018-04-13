@@ -145,10 +145,9 @@ func (my *actorT) sendFourRequireSetMultiple(player database.Player) {
 	my.send(player, &four_proto.FourRequireSetMultiple{})
 }
 
-func (my *actorT) sendFourSetMultipleSuccess(player database.Player, operator database.Player, multiple int32) {
+func (my *actorT) sendFourSetMultipleSuccess(player database.Player, SetMultiplePlayers []*four_proto.FourSetMultipleSuccess_MultiplePlayers) {
 	my.send(player, &four_proto.FourSetMultipleSuccess{
-		PlayerId: int32(operator),
-		Multiple: multiple,
+		Players: SetMultiplePlayers,
 	})
 }
 
@@ -179,9 +178,9 @@ func (my *actorT) sendFourDismissFinally(player database.Player, dismiss bool, r
 
 // --------------------------------------------------------
 
-func (my *actorT) sendFourSetMultipleSuccessForAll(room fourRoomT, operator database.Player, multiple int32) {
+func (my *actorT) sendFourSetMultipleSuccessForAll(room fourRoomT, SetMultiplePlayers []*four_proto.FourSetMultipleSuccess_MultiplePlayers) {
 	for _, player := range room.GetPlayers() {
-		my.sendFourSetMultipleSuccess(player, operator, multiple)
+		my.sendFourSetMultipleSuccess(player, SetMultiplePlayers)
 	}
 }
 

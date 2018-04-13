@@ -396,6 +396,14 @@ func (r *fourFixedBankerRoomT) Recover(player *playerT) {
 	r.Hall.sendFourUpdateRoomForAll(r)
 	if r.Gaming {
 		r.Hall.sendFourUpdateRound(player.Player, r)
+		SetMultiplePlayers := []*four_proto.FourSetMultipleSuccess_MultiplePlayers{}
+		for _, player := range r.Players {
+			SetMultiplePlayers = append(SetMultiplePlayers, &four_proto.FourSetMultipleSuccess_MultiplePlayers{
+				Multiple: player.Round.Multiple,
+				PlayerId: int32(player.Player),
+			})
+		}
+		r.Hall.sendFourSetMultipleSuccess(player.Player, SetMultiplePlayers)
 		r.Loop()
 	}
 }
@@ -696,7 +704,14 @@ func (r *fourFixedBankerRoomT) FourSetMultiple(player *playerT, multiple int32) 
 	if r.Gaming {
 		r.Players[player.Player].Round.Multiple = multiple
 		r.Players[player.Player].Round.MultipleCommitted = true
-		r.Hall.sendFourSetMultipleSuccessForAll(r, player.Player, multiple)
+		SetMultiplePlayers := []*four_proto.FourSetMultipleSuccess_MultiplePlayers{}
+		for _, player := range r.Players {
+			SetMultiplePlayers = append(SetMultiplePlayers, &four_proto.FourSetMultipleSuccess_MultiplePlayers{
+				Multiple: player.Round.Multiple,
+				PlayerId: int32(player.Player),
+			})
+		}
+		r.Hall.sendFourSetMultipleSuccessForAll(r, SetMultiplePlayers)
 		r.Hall.sendFourUpdateRoundForAll(r)
 		r.Loop()
 	}

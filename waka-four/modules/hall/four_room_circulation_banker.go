@@ -389,6 +389,14 @@ func (r *fourCirculationBankerRoomT) Recover(player *playerT) {
 	r.Hall.sendFourUpdateRoomForAll(r)
 	if r.Gaming {
 		r.Hall.sendFourUpdateRound(player.Player, r)
+		SetMultiplePlayers := []*four_proto.FourSetMultipleSuccess_MultiplePlayers{}
+		for _, player := range r.Players {
+			SetMultiplePlayers = append(SetMultiplePlayers, &four_proto.FourSetMultipleSuccess_MultiplePlayers{
+				Multiple: player.Round.Multiple,
+				PlayerId: int32(player.Player),
+			})
+		}
+		r.Hall.sendFourSetMultipleSuccess(player.Player, SetMultiplePlayers)
 		r.Loop()
 	}
 }
@@ -678,7 +686,14 @@ func (r *fourCirculationBankerRoomT) FourSetMultiple(player *playerT, multiple i
 	if r.Gaming {
 		r.Players[player.Player].Round.Multiple = multiple
 		r.Players[player.Player].Round.MultipleCommitted = true
-		r.Hall.sendFourSetMultipleSuccessForAll(r, player.Player, multiple)
+		SetMultiplePlayers := []*four_proto.FourSetMultipleSuccess_MultiplePlayers{}
+		for _, player := range r.Players {
+			SetMultiplePlayers = append(SetMultiplePlayers, &four_proto.FourSetMultipleSuccess_MultiplePlayers{
+				Multiple: player.Round.Multiple,
+				PlayerId: int32(player.Player),
+			})
+		}
+		r.Hall.sendFourSetMultipleSuccessForAll(r, SetMultiplePlayers)
 		r.Hall.sendFourUpdateRoundForAll(r)
 		r.Loop()
 	}
@@ -1105,7 +1120,7 @@ A:
 	r.Hall.sendFourUpdateRoomForAll(r)
 	r.Hall.sendFourStartedForAll(r, r.RoundNumber)
 
-	r.loop = r.loopSetMultiple
+	r.loop = r.loopCut
 
 	return true
 }
@@ -1175,7 +1190,7 @@ func (r *fourCirculationBankerRoomT) loopCutAnimationContinue() bool {
 		return false
 	}
 
-	r.loop = r.loopDeal
+	r.loop = r.loopSetMultiple
 
 	return true
 }

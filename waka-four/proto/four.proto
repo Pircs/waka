@@ -567,11 +567,14 @@ message FourRequireSetMultiple{}
 // @comments 闲家设置倍数成功
 // @receive
 message FourSetMultipleSuccess{
-    // 玩家 ID
-    int32 player_id = 1;
-    // 选择倍数
-    int32 multiple =2 ;
 
+    message MultiplePlayers{
+        // 玩家 ID
+        int32 player_id = 1;
+        // 选择倍数
+        int32 multiple =2 ;
+    }
+    repeated MultiplePlayers players =1;
 }
 
 // @comments 闲家设置倍数倒计时
