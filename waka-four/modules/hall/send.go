@@ -137,6 +137,12 @@ func (my *actorT) sendFourRequireGrabBanker(player database.Player) {
 	my.send(player, &four_proto.FourRequireGrabBanker{})
 }
 
+func (my *actorT) sendFourGrabSuccess(player database.Player, grabTimes int32) {
+	my.send(player, &four_proto.FourGrabSuccess{
+		Grab: grabTimes,
+	})
+}
+
 func (my *actorT) sendFourGrabAnimation(player database.Player, room fourRoomT) {
 	my.send(player, room.FourGrabAnimation())
 }
@@ -177,6 +183,12 @@ func (my *actorT) sendFourDismissFinally(player database.Player, dismiss bool, r
 }
 
 // --------------------------------------------------------
+
+func (my *actorT) sendFourGrabSuccessForAll(room fourRoomT, grabTimes int32) {
+	for _, player := range room.GetPlayers() {
+		my.sendFourGrabSuccess(player, grabTimes)
+	}
+}
 
 func (my *actorT) sendFourSetMultipleSuccessForAll(room fourRoomT, SetMultiplePlayers []*four_proto.FourSetMultipleSuccess_MultiplePlayers) {
 	for _, player := range room.GetPlayers() {

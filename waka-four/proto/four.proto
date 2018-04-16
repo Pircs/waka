@@ -443,6 +443,12 @@ message FourRoom2 {
         bool lost = 3;
         // 位置
         int32 pos = 4;
+        // ip
+        string ip =5;
+        // 昵称
+        string nickname = 6;
+        // 头像
+        string head = 7;
     }
 
     // 房间 ID
@@ -526,8 +532,20 @@ message FourGrab{
     int32 number =2 ;
 }
 
+// @comments 明牌抢庄玩家抢庄成功
+// @receive
+message FourGrabSuccess{
+    // 抢庄倍数
+    // 0 不抢
+    // 1 1倍
+    // 2 2倍
+    // 4 4倍
+    // 8 8倍
+    int32 grab =1;
+}
+
 // @comments 抢庄家倒计时
-// @receiveb
+// @receive
 message FourGrabBankerCountdown {
     // 倒计时
     int32 number = 1;

@@ -68,8 +68,10 @@ type fourNoBankerRoomPlayerT struct {
 
 func (player *fourNoBankerRoomPlayerT) FourRoom2Player() *four_proto.FourRoom2_Player {
 	lost := false
+	var ip string
 	if player, being := player.Room.Hall.players[player.Player]; !being || player.Remote == "" {
 		lost = true
+		ip = player.Remote
 	}
 	if player.Room.Owner == player.Player {
 		player.Ready = true
@@ -79,6 +81,9 @@ func (player *fourNoBankerRoomPlayerT) FourRoom2Player() *four_proto.FourRoom2_P
 		Ready:    player.Ready,
 		Lost:     lost,
 		Pos:      player.Pos,
+		Nickname: player.Player.PlayerData().Nickname,
+		Head:     player.Player.PlayerData().Head,
+		Ip:       ip,
 	}
 }
 

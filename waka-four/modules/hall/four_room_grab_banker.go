@@ -82,8 +82,10 @@ type fourGrabBankerRoomPlayerT struct {
 
 func (player *fourGrabBankerRoomPlayerT) FourRoom2Player() *four_proto.FourRoom2_Player {
 	lost := false
+	var ip string
 	if player, being := player.Room.Hall.players[player.Player]; !being || player.Remote == "" {
 		lost = true
+		ip = player.Remote
 	}
 	if player.Room.Owner == player.Player {
 		player.Ready = true
@@ -93,6 +95,9 @@ func (player *fourGrabBankerRoomPlayerT) FourRoom2Player() *four_proto.FourRoom2
 		Ready:    player.Ready,
 		Lost:     lost,
 		Pos:      player.Pos,
+		Nickname: player.Player.PlayerData().Nickname,
+		Head:     player.Player.PlayerData().Head,
+		Ip:       ip,
 	}
 }
 
@@ -397,10 +402,25 @@ func (r *fourGrabBankerRoomT) Recover(player *playerT) {
 	if playerData, being := r.Players[player.Player]; being {
 		playerData.Round.Sent = false
 	}
-	if r.Step == "commit_pokers" {
+	if r.Step == "commit_pokers" || r.Step == "set_multiple" || r.Step == "require_grab" || r.Step == "grab_animation" {
 		r.Hall.sendFourDeal(player.Player, r.Players[player.Player].Round.Pokers)
 	}
-	r.Hall.sendFourUpdateRoomForAll(r)
+	if r.Step == "set_multiple" && !r.Players[player.Player].Round.MultipleCommitted {
+		r.Hall.sendFourRequireSetMultiple(player.Player)
+	}
+	if r.Step == "set_multiple" && r.Banker == player.Player {
+		r.Players[r.Banker].Round.MultipleCommitted = true
+		r.Players[r.Banker].Round.Multiple = 1
+	}
+	if r.Step == "settle_continue" {
+		r.Hall.sendFourSettle(player.Player, r)
+		for _, player := range r.Players {
+			r.Hall.sendFourUpdateContinueWithStatus(player.Player, r)
+		}
+	}
+	log.WithFields(logrus.Fields{
+		"step": r.Step,
+	}).Warnln("step")
 	if r.Gaming {
 		r.Hall.sendFourUpdateRound(player.Player, r)
 		SetMultiplePlayers := []*four_proto.FourSetMultipleSuccess_MultiplePlayers{}
@@ -413,6 +433,7 @@ func (r *fourGrabBankerRoomT) Recover(player *playerT) {
 		r.Hall.sendFourSetMultipleSuccess(player.Player, SetMultiplePlayers)
 		r.Loop()
 	}
+	r.Hall.sendFourUpdateRoomForAll(r)
 }
 
 func (r *fourGrabBankerRoomT) CreateRoom(hall *actorT, id int32, option *four_proto.FourRoomOption, creator database.Player) fourRoomT {
@@ -702,8 +723,8 @@ func (r *fourGrabBankerRoomT) FourGrabBanker(player *playerT, grab bool, grabTim
 		r.Players[player.Player].Round.GrabTimes = grabTimes
 		r.Players[player.Player].Round.GrabCommitted = true
 
+		r.Hall.sendFourGrabSuccessForAll(r, grabTimes)
 		r.Hall.sendFourUpdateRoundForAll(r)
-
 		r.Loop()
 	}
 }
@@ -721,7 +742,6 @@ func (r *fourGrabBankerRoomT) FourSetMultiple(player *playerT, multiple int32) {
 		}
 		r.Hall.sendFourSetMultipleSuccessForAll(r, SetMultiplePlayers)
 		r.Hall.sendFourUpdateRoundForAll(r)
-
 		r.Loop()
 	}
 }
@@ -1164,9 +1184,6 @@ func (r *fourGrabBankerRoomT) loopSettle() bool {
 		return players[i].Player < players[j].Player
 	})
 	banker := &r.Players[r.Banker].Round
-	log.WithFields(logrus.Fields{
-		"GrabTimes": banker.GrabTimes,
-	}).Warnln("GrabTimes")
 	for i := 0; i < len(players); i++ {
 		var player *fourGrabBankerRoomPlayerRoundT
 		if players[i].Player != r.Banker {
@@ -1178,31 +1195,33 @@ func (r *fourGrabBankerRoomT) loopSettle() bool {
 			continue
 		}
 		switch {
-		case banker.PokersWeightFront == player.PokersWeightFront && banker.PokersWeightBehind < player.PokersWeightBehind,
-			banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind,
-			banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind < player.PokersWeightBehind:
+		case banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind < player.PokersWeightBehind:
 			banker.PokersPoints += (player.PokersScoreFront + player.PokersScoreBehind) * (-1) * player.Multiple * banker.GrabTimes
 			player.PokersPoints += (player.PokersScoreFront + player.PokersScoreBehind) * player.Multiple * banker.GrabTimes
 
 		case banker.PokersWeightFront == player.PokersWeightFront && banker.PokersWeightBehind > player.PokersWeightBehind,
-			banker.PokersWeightFront > player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind,
-			banker.PokersWeightFront > player.PokersWeightFront && banker.PokersWeightBehind > player.PokersWeightBehind:
+			banker.PokersWeightFront == player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind,
+			banker.PokersWeightFront > player.PokersWeightFront && banker.PokersWeightBehind > player.PokersWeightBehind,
+			banker.PokersWeightFront > player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind:
+
 			banker.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * player.Multiple * banker.GrabTimes
 			player.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * (-1) * player.Multiple * banker.GrabTimes
 
-		case banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind > player.PokersWeightBehind:
+		case banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind > player.PokersWeightBehind,
+			banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind:
+
 			banker.PokersPoints += player.PokersScoreFront * (-1) * player.Multiple * banker.GrabTimes
 			player.PokersPoints += player.PokersScoreFront * player.Multiple * banker.GrabTimes
 			banker.PokersPoints += banker.PokersScoreBehind * player.Multiple * banker.GrabTimes
 			player.PokersPoints += banker.PokersScoreBehind * (-1) * player.Multiple * banker.GrabTimes
-		case banker.PokersWeightFront > player.PokersWeightFront && banker.PokersWeightBehind < player.PokersWeightBehind:
+
+		case banker.PokersWeightFront > player.PokersWeightFront && banker.PokersWeightBehind < player.PokersWeightBehind,
+			banker.PokersWeightFront == player.PokersWeightFront && banker.PokersWeightBehind < player.PokersWeightBehind:
+
 			banker.PokersPoints += banker.PokersScoreFront * player.Multiple * banker.GrabTimes
 			player.PokersPoints += banker.PokersScoreFront * (-1) * player.Multiple * banker.GrabTimes
 			banker.PokersPoints += player.PokersScoreBehind * (-1) * player.Multiple * banker.GrabTimes
 			player.PokersPoints += player.PokersScoreBehind * player.Multiple * banker.GrabTimes
-		case banker.PokersWeightFront == player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind:
-			banker.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * player.Multiple * banker.GrabTimes
-			player.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * (-1) * player.Multiple * banker.GrabTimes
 		}
 	}
 
@@ -1272,6 +1291,10 @@ func (r *fourGrabBankerRoomT) loopSelect() bool {
 
 	r.Compared = nil
 	r.Settled = nil
+	for _, player := range r.Players {
+		player.Round.Multiple = 0
+		player.Round.MultipleCommitted = false
+	}
 	r.Step = ""
 
 	if r.RoundNumber < r.Option.GetRounds() {
