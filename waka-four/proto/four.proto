@@ -532,6 +532,15 @@ message FourGrab{
     int32 number =2 ;
 }
 
+// @comments 明牌成为庄家
+// @receive
+message FourBankerMsg{
+    // 庄家Id
+    int32 player_id = 1;
+    // 庄家倍数
+    int32 number = 2;
+}
+
 // @comments 明牌抢庄玩家抢庄成功
 // @receive
 message FourGrabSuccess{

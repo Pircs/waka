@@ -147,6 +147,13 @@ func (my *actorT) sendFourGrabAnimation(player database.Player, room fourRoomT) 
 	my.send(player, room.FourGrabAnimation())
 }
 
+func (my *actorT) sendFourBankerMsg(player database.Player,banker database.Player,number int32){
+	my.send(player,&four_proto.FourBankerMsg{
+		PlayerId:int32(banker),
+		Number:number,
+	})
+}
+
 func (my *actorT) sendFourRequireSetMultiple(player database.Player) {
 	my.send(player, &four_proto.FourRequireSetMultiple{})
 }
@@ -229,6 +236,12 @@ func (my *actorT) sendFourSetMultipleCountdownForAll(room fourRoomT, number int3
 func (my *actorT) sendFourGrabBankerCountdownForAll(room fourRoomT, number int32) {
 	for _, player := range room.GetPlayers() {
 		my.sendFourGrabBankerCountdown(player, number)
+	}
+}
+
+func (my *actorT) sendFourBankerMsgForAll(room fourRoomT,banker database.Player,number  int32){
+	for _, player := range room.GetPlayers() {
+		my.sendFourBankerMsg(player,banker, number)
 	}
 }
 

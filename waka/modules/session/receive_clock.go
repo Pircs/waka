@@ -5,7 +5,7 @@ import (
 
 	"github.com/AsynkronIT/protoactor-go/actor"
 
-	"github.com/liuhan907/waka/waka/proto"
+	"github.com/liuhan907/waka-/waka/proto"
 )
 
 func (my *actorT) ReceiveClock(context actor.Context) bool {

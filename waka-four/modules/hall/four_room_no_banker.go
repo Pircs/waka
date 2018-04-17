@@ -174,6 +174,8 @@ func (r *fourNoBankerRoomT) CreateDiamonds() int32 {
 		return base * 8
 	case 2:
 		return base
+	case 3 :
+		return  base *8
 	default:
 		return math.MaxInt32
 	}
@@ -209,6 +211,8 @@ func (r *fourNoBankerRoomT) CostDiamonds() int32 {
 		return base * int32(len(r.Players))
 	case 2:
 		return base
+	case 3 :
+		return base *int32(len(r.Players))
 	default:
 		return math.MaxInt32
 	}
@@ -569,10 +573,10 @@ func (r *fourNoBankerRoomT) Start(player *playerT) {
 				})
 			}
 			var err error
-			if r.Option.GetCardType() == 1 || r.Option.GetCardType() == 2 {
+			if r.Option.GetPayMode() == 1 || r.Option.GetPayMode() == 2 {
 				err = database.FourOrderRoomSettle(r.Id, playerRoomCost)
-			} else if r.Option.GetCardType() == 3 {
-				err = database.FourOrderRoomSettle(r.Id, playerRoomCost)
+			} else if r.Option.GetPayMode() == 3 {
+				err = database.FourPayForAnotherRoomSettle(r.Id, playerRoomCost[0])
 			}
 			if err != nil {
 				log.WithFields(logrus.Fields{

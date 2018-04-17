@@ -172,6 +172,8 @@ func (r *fourFixedBankerRoomT) CreateDiamonds() int32 {
 		return base * 8
 	case 2:
 		return base
+	case 3 :
+		return  base *8
 	default:
 		return math.MaxInt32
 	}
@@ -205,8 +207,8 @@ func (r *fourFixedBankerRoomT) CostDiamonds() int32 {
 	switch r.Option.GetPayMode() {
 	case 1:
 		return base * int32(len(r.Players))
-	case 2:
-		return base
+	case 3 :
+		return base *int32(len(r.Players))
 	default:
 		return math.MaxInt32
 	}
@@ -592,10 +594,10 @@ func (r *fourFixedBankerRoomT) Start(player *playerT) {
 				})
 			}
 			var err error
-			if r.Option.GetCardType() == 1 || r.Option.GetCardType() == 2 {
+			if r.Option.GetPayMode() == 1 || r.Option.GetPayMode() == 2 {
 				err = database.FourOrderRoomSettle(r.Id, playerRoomCost)
-			} else if r.Option.GetCardType() == 3 {
-				err = database.FourOrderRoomSettle(r.Id, playerRoomCost)
+			} else if r.Option.GetPayMode() == 3 {
+				err = database.FourPayForAnotherRoomSettle(r.Id, playerRoomCost[0])
 			}
 			if err != nil {
 				log.WithFields(logrus.Fields{
@@ -1131,32 +1133,32 @@ func (r *fourFixedBankerRoomT) loopSettle() bool {
 		}
 		switch {
 		case banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind < player.PokersWeightBehind:
-			banker.PokersPoints += (player.PokersScoreFront + player.PokersScoreBehind) * (-1) * player.Multiple * r.Option.Rate
-			player.PokersPoints += (player.PokersScoreFront + player.PokersScoreBehind) * player.Multiple * r.Option.Rate
+			banker.PokersPoints += (player.PokersScoreFront + player.PokersScoreBehind) * (-1) * player.Multiple
+			player.PokersPoints += (player.PokersScoreFront + player.PokersScoreBehind) * player.Multiple
 
 		case banker.PokersWeightFront == player.PokersWeightFront && banker.PokersWeightBehind > player.PokersWeightBehind,
 			banker.PokersWeightFront == player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind,
 			banker.PokersWeightFront > player.PokersWeightFront && banker.PokersWeightBehind > player.PokersWeightBehind,
 			banker.PokersWeightFront > player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind:
 
-			banker.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * player.Multiple * r.Option.Rate
-			player.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * (-1) * player.Multiple * r.Option.Rate
+			banker.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * player.Multiple
+			player.PokersPoints += (banker.PokersScoreFront + banker.PokersScoreBehind) * (-1) * player.Multiple
 
 		case banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind > player.PokersWeightBehind,
 			banker.PokersWeightFront < player.PokersWeightFront && banker.PokersWeightBehind == player.PokersWeightBehind:
 
-			banker.PokersPoints += player.PokersScoreFront * (-1) * player.Multiple * r.Option.Rate
-			player.PokersPoints += player.PokersScoreFront * player.Multiple * r.Option.Rate
-			banker.PokersPoints += banker.PokersScoreBehind * player.Multiple * r.Option.Rate
-			player.PokersPoints += banker.PokersScoreBehind * (-1) * player.Multiple * r.Option.Rate
+			banker.PokersPoints += player.PokersScoreFront * (-1) * player.Multiple
+			player.PokersPoints += player.PokersScoreFront * player.Multiple
+			banker.PokersPoints += banker.PokersScoreBehind * player.Multiple
+			player.PokersPoints += banker.PokersScoreBehind * (-1) * player.Multiple
 
 		case banker.PokersWeightFront > player.PokersWeightFront && banker.PokersWeightBehind < player.PokersWeightBehind,
 			banker.PokersWeightFront == player.PokersWeightFront && banker.PokersWeightBehind < player.PokersWeightBehind:
 
-			banker.PokersPoints += banker.PokersScoreFront * player.Multiple * r.Option.Rate
-			player.PokersPoints += banker.PokersScoreFront * (-1) * player.Multiple * r.Option.Rate
-			banker.PokersPoints += player.PokersScoreBehind * (-1) * player.Multiple * r.Option.Rate
-			player.PokersPoints += player.PokersScoreBehind * player.Multiple * r.Option.Rate
+			banker.PokersPoints += banker.PokersScoreFront * player.Multiple
+			player.PokersPoints += banker.PokersScoreFront * (-1) * player.Multiple
+			banker.PokersPoints += player.PokersScoreBehind * (-1) * player.Multiple
+			player.PokersPoints += player.PokersScoreBehind * player.Multiple
 		}
 	}
 

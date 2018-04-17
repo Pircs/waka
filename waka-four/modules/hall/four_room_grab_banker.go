@@ -177,6 +177,8 @@ func (r *fourGrabBankerRoomT) CreateDiamonds() int32 {
 		return base * 8
 	case 2:
 		return base
+	case 3 :
+		return  base *8
 	default:
 		return math.MaxInt32
 	}
@@ -212,6 +214,8 @@ func (r *fourGrabBankerRoomT) CostDiamonds() int32 {
 		return base * int32(len(r.Players))
 	case 2:
 		return base
+	case 3 :
+		return base *int32(len(r.Players))
 	default:
 		return math.MaxInt32
 	}
@@ -399,28 +403,15 @@ func (r *fourGrabBankerRoomT) Left(player *playerT) {
 }
 
 func (r *fourGrabBankerRoomT) Recover(player *playerT) {
+	r.Hall.sendFourUpdateRoomForAll(r)
+
 	if playerData, being := r.Players[player.Player]; being {
 		playerData.Round.Sent = false
 	}
-	if r.Step == "commit_pokers" || r.Step == "set_multiple" || r.Step == "require_grab" || r.Step == "grab_animation" {
-		r.Hall.sendFourDeal(player.Player, r.Players[player.Player].Round.Pokers)
-	}
-	if r.Step == "set_multiple" && !r.Players[player.Player].Round.MultipleCommitted {
-		r.Hall.sendFourRequireSetMultiple(player.Player)
-	}
-	if r.Step == "set_multiple" && r.Banker == player.Player {
-		r.Players[r.Banker].Round.MultipleCommitted = true
-		r.Players[r.Banker].Round.Multiple = 1
-	}
-	if r.Step == "settle_continue" {
-		r.Hall.sendFourSettle(player.Player, r)
-		for _, player := range r.Players {
-			r.Hall.sendFourUpdateContinueWithStatus(player.Player, r)
-		}
-	}
-	log.WithFields(logrus.Fields{
+/*	log.WithFields(logrus.Fields{
 		"step": r.Step,
-	}).Warnln("step")
+		"status":r.Players[player.Player].Ready,
+	}).Warnln("step")*/
 	if r.Gaming {
 		r.Hall.sendFourUpdateRound(player.Player, r)
 		SetMultiplePlayers := []*four_proto.FourSetMultipleSuccess_MultiplePlayers{}
@@ -433,7 +424,26 @@ func (r *fourGrabBankerRoomT) Recover(player *playerT) {
 		r.Hall.sendFourSetMultipleSuccess(player.Player, SetMultiplePlayers)
 		r.Loop()
 	}
-	r.Hall.sendFourUpdateRoomForAll(r)
+
+	if r.Step == "set_multiple" && !r.Players[player.Player].Round.MultipleCommitted {
+		r.Hall.sendFourRequireSetMultiple(player.Player)
+	}
+
+	if r.Step == "set_multiple" && r.Banker == player.Player {
+		r.Players[r.Banker].Round.MultipleCommitted = true
+		r.Players[r.Banker].Round.Multiple = 1
+	}
+
+	if r.Step == "settle_continue" {
+		r.Hall.sendFourSettle(player.Player, r)
+		//r.Players[player.Player].Round.ContinueWithCommitted=true
+	}
+	if r.Step == "commit_pokers" || r.Step == "set_multiple" || r.Step == "require_grab" || r.Step == "grab_animation" {
+		r.Hall.sendFourDeal(player.Player, r.Players[player.Player].Round.Pokers)
+	}
+	if r.Step=="commit_pokers"||r.Step=="set_multiple"{
+		r.Hall.sendFourBankerMsg(player.Player,r.Banker,r.Players[r.Banker].Round.GrabTimes)
+	}
 }
 
 func (r *fourGrabBankerRoomT) CreateRoom(hall *actorT, id int32, option *four_proto.FourRoomOption, creator database.Player) fourRoomT {
@@ -459,6 +469,9 @@ func (r *fourGrabBankerRoomT) CreateRoom(hall *actorT, id int32, option *four_pr
 	}
 
 	if creator.PlayerData().Diamonds < r.CreateDiamonds() {
+		log.WithFields(logrus.Fields{
+			"CreateDiamonds":  r.CreateDiamonds(),
+		}).Warnln("CreateDiamonds")
 		r.Hall.sendFourCreateRoomFailed(creator, 1)
 		return nil
 	} else {
@@ -614,10 +627,10 @@ func (r *fourGrabBankerRoomT) Start(player *playerT) {
 				})
 			}
 			var err error
-			if r.Option.GetCardType() == 1 || r.Option.GetCardType() == 2 {
+			if r.Option.GetPayMode() == 1 || r.Option.GetPayMode() == 2 {
 				err = database.FourOrderRoomSettle(r.Id, playerRoomCost)
-			} else if r.Option.GetCardType() == 3 {
-				err = database.FourOrderRoomSettle(r.Id, playerRoomCost)
+			} else if r.Option.GetPayMode() == 3 {
+				err = database.FourPayForAnotherRoomSettle(r.Id, playerRoomCost[0])
 			}
 			if err != nil {
 				log.WithFields(logrus.Fields{
@@ -976,10 +989,6 @@ func (r *fourGrabBankerRoomT) loopGrabSelect() bool {
 		}
 		noOneGarb = append(noOneGarb, player.Player)
 	}
-	log.WithFields(logrus.Fields{
-		"maxGarb": max,
-		"len":     len(candidates),
-	}).Warnln("maxGarb")
 	if len(candidates) > 0 {
 		r.Banker = candidates[rand.Int()%len(candidates)]
 	} else {
@@ -987,6 +996,7 @@ func (r *fourGrabBankerRoomT) loopGrabSelect() bool {
 		r.Players[r.Banker].Round.GrabTimes = 1
 	}
 	r.Hall.sendFourUpdateRoomForAll(r)
+	r.Hall.sendFourBankerMsgForAll(r,r.Banker,r.Players[r.Banker].Round.GrabTimes)
 	r.loop = r.loopSetMultiple
 	return true
 }
