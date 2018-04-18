@@ -8,6 +8,7 @@ import (
 	"github.com/liuhan907/waka/waka-four/proto"
 	"github.com/liuhan907/waka/waka/modules/supervisor/supervisor_message"
 	"gopkg.in/ahmetb/go-linq.v3"
+	"github.com/sirupsen/logrus"
 )
 
 func (my *actorT) playerFutureRequestedFour(player *playerT, ev *supervisor_message.PlayerFutureRequested) bool {
@@ -244,7 +245,6 @@ func (my *actorT) FourBecomeFriendRequest(player *playerT,
 func (my *actorT) FourPullPayForAnotherRoomListRequest(player *playerT,
 	ev *four_proto.FourPullPayForAnotherRoomListRequest,
 	respond func(proto.Message, error)) {
-
 	respond(&four_proto.FourPullPayForAnotherRoomListResponse{my.fourRooms.WherePayForAnother().WhereCreator(player.Player).FourRoom1()}, nil)
 }
 

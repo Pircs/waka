@@ -121,6 +121,7 @@ type fourFixedBankerRoomT struct {
 	Option *four_proto.FourRoomOption
 	Owner  database.Player
 	Banker database.Player
+	Creator database.Player
 
 	Players fourFixedBankerRoomPlayerMapT
 
@@ -223,7 +224,7 @@ func (r *fourFixedBankerRoomT) GetOption() *four_proto.FourRoomOption {
 }
 
 func (r *fourFixedBankerRoomT) GetCreator() database.Player {
-	return r.Owner
+	return r.Creator
 }
 
 func (r *fourFixedBankerRoomT) GetOwner() database.Player {
@@ -370,8 +371,14 @@ func (r *fourFixedBankerRoomT) BackendRoom() map[string]interface{} {
 		"id":           r.Id,
 		"status":       r.Step,
 		"owner":        r.Owner,
+		"banker":int32(r.Banker),
 		"rounds":       r.Option.GetRounds(),
+		"pay_mode":r.Option.PayMode,
+		"rule_ode":r.Option.RuleMode,
+		"card_type":r.Option.CardType,
+		"scret":r.Option.Scret,
 		"round_number": r.RoundNumber,
+		"rate":r.Option.Rate,
 		"players":      players,
 	}
 }
@@ -421,33 +428,37 @@ func (r *fourFixedBankerRoomT) CreateRoom(hall *actorT, id int32, option *four_p
 		Hall:    hall,
 		Id:      id,
 		Option:  option,
-		Owner:   creator,
 		Players: make(fourFixedBankerRoomPlayerMapT, 8),
 		Seats:   tools.NewNumberPool(1, 8, false),
 		Banker:  0,
-	}
-
-	pos, _ := r.Seats.Acquire()
-	r.Players[creator] = &fourFixedBankerRoomPlayerT{
-		Room:   r,
-		Player: creator,
-		Pos:    pos,
-	}
-
-	if creator.PlayerData().VictoryRate > 0 {
-		r.King = append(r.King, creator)
+		Creator:creator,
 	}
 
 	if creator.PlayerData().Diamonds < r.CreateDiamonds() {
 		r.Hall.sendFourCreateRoomFailed(creator, 1)
 		return nil
 	} else {
+		if r.Option.PayMode==1||r.Option.PayMode==2{
+			if creator.PlayerData().VictoryRate > 0 {
+				r.King = append(r.King, creator)
+			}
+			r.Owner=creator
+			r.Hall.players[creator].InsideFour = id
+			pos, _ := r.Seats.Acquire()
+			r.Players[creator] = &fourFixedBankerRoomPlayerT{
+				Room:   r,
+				Player: creator,
+				Pos:    pos,
+			}
+			r.Hall.sendFourCreateRoomSuccess(creator)
+			r.Hall.sendFourJoinRoomSuccess(creator)
+		}
+		if r.Option.PayMode==3{
+			r.Owner=0
+			r.Hall.sendFourCreateRoomSuccess(creator)
+
+		}
 		r.Hall.fourRooms[id] = r
-
-		r.Hall.players[creator].InsideFour = id
-
-		r.Hall.sendFourCreateRoomSuccess(creator)
-		r.Hall.sendFourJoinRoomSuccess(creator)
 		r.Hall.sendFourUpdateRoomForAll(r)
 
 		return r
@@ -497,7 +508,9 @@ func (r *fourFixedBankerRoomT) JoinRoom(player *playerT) {
 	if player.Player.PlayerData().VictoryRate > 0 {
 		r.King = append(r.King, player.Player)
 	}
-
+	if r.Option.PayMode==3&&r.Owner==0{
+		r.Owner=player.Player
+	}
 	player.InsideFour = r.GetId()
 
 	r.Hall.sendFourJoinRoomSuccess(player.Player)
@@ -537,7 +550,7 @@ func (r *fourFixedBankerRoomT) SwitchReady(player *playerT) {
 
 func (r *fourFixedBankerRoomT) Dismiss(player *playerT) {
 	if !r.Gaming {
-		if r.Owner == player.Player {
+		if r.Creator == player.Player {
 			delete(r.Hall.fourRooms, r.Id)
 			for _, player := range r.Players {
 				r.Hall.players[player.Player].InsideFour = 0
@@ -589,7 +602,7 @@ func (r *fourFixedBankerRoomT) Start(player *playerT) {
 				}
 			} else if r.Option.GetPayMode() == 3 {
 				playerRoomCost = append(playerRoomCost, &database.FourPlayerRoomCost{
-					Player: r.Owner,
+					Player: r.GetCreator(),
 					Number: r.CostDiamonds(),
 				})
 			}

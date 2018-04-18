@@ -58,17 +58,17 @@ type fourRoomT interface {
 
 type fourRoomMapT map[int32]fourRoomT
 
-func (cows fourRoomMapT) FourRoom1() []*four_proto.FourRoom1 {
+func (fours fourRoomMapT) FourRoom1() []*four_proto.FourRoom1 {
 	var d []*four_proto.FourRoom1
-	for _, r := range cows {
+	for _, r := range fours {
 		d = append(d, r.FourRoom1())
 	}
 	return d
 }
 
-func (cows fourRoomMapT) FourRoom2() []*four_proto.FourRoom2 {
+func (fours fourRoomMapT) FourRoom2() []*four_proto.FourRoom2 {
 	var d []*four_proto.FourRoom2
-	for _, r := range cows {
+	for _, r := range fours {
 		d = append(d, r.FourRoom2())
 	}
 	return d
