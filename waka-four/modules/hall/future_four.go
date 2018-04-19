@@ -8,7 +8,6 @@ import (
 	"github.com/liuhan907/waka/waka-four/proto"
 	"github.com/liuhan907/waka/waka/modules/supervisor/supervisor_message"
 	"gopkg.in/ahmetb/go-linq.v3"
-	"github.com/sirupsen/logrus"
 )
 
 func (my *actorT) playerFutureRequestedFour(player *playerT, ev *supervisor_message.PlayerFutureRequested) bool {

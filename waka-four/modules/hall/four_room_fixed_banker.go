@@ -208,6 +208,8 @@ func (r *fourFixedBankerRoomT) CostDiamonds() int32 {
 	switch r.Option.GetPayMode() {
 	case 1:
 		return base * int32(len(r.Players))
+	case 2 :
+	    return base
 	case 3 :
 		return base *int32(len(r.Players))
 	default:
@@ -802,7 +804,7 @@ func (r *fourFixedBankerRoomT) loopGrab() bool {
 
 	r.loop = r.loopGrabContinue
 	r.tick = buildTickNumber(
-		5,
+		10,
 		func(number int32) {
 			r.Hall.sendFourGrabBankerCountdownForAll(r, number)
 		},

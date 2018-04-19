@@ -12,7 +12,7 @@ type FourPlayerRoomCost struct {
 	Number int32
 }
 
-// 四张约战房间场费结算
+// 四张房主支付和房间场费结算
 func FourOrderRoomSettle(room int32, players []*FourPlayerRoomCost) error {
 	var changed []Player
 	var modifies []*modifyDiamondsAction

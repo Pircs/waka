@@ -433,6 +433,7 @@ func (r *fourCirculationBankerRoomT) CreateRoom(hall *actorT, id int32, option *
 		return nil
 	} else {
 		if r.Option.PayMode==1||r.Option.PayMode==2{
+			r.Hall.players[creator].InsideFour = id
 			r.Owner=creator
 			if creator.PlayerData().VictoryRate > 0 {
 				r.King = append(r.King, creator)
@@ -514,7 +515,6 @@ func (r *fourCirculationBankerRoomT) LeaveRoom(player *playerT) {
 			player.InsideFour = 0
 			delete(r.Players, player.Player)
 			r.Seats.Return(roomPlayer.Pos)
-
 			r.Hall.sendFourLeftRoom(player.Player)
 
 			if r.Owner == player.Player {
@@ -523,6 +523,10 @@ func (r *fourCirculationBankerRoomT) LeaveRoom(player *playerT) {
 					r.Hall.players[player.Player].InsideFour = 0
 					r.Hall.sendFourLeftRoomByDismiss(player.Player)
 				}
+				log.WithFields(logrus.Fields{
+					"Owner": r.Owner,
+					"player": player.Player,
+				}).Warnln("LeaveRoom")
 			} else {
 				r.Hall.sendFourUpdateRoomForAll(r)
 			}
