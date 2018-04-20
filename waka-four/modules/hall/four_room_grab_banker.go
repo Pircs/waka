@@ -163,25 +163,38 @@ func (r *fourGrabBankerRoomT) FourGrabOfFixedBanker(player *playerT, grab bool) 
 
 func (r *fourGrabBankerRoomT) CreateDiamonds() int32 {
 	base := int32(0)
-	switch r.Option.GetRounds() {
-	case 8:
-		base = 6
-	case 16:
-		base = 12
-	case 24:
-		base = 18
-	default:
-		return math.MaxInt32
-	}
-	switch r.Option.GetPayMode() {
-	case 1:
-		return base * 8
-	case 2:
-		return base
-	case 3 :
-		return  base *8
-	default:
-		return math.MaxInt32
+	if r.Option.PayMode==2{
+		switch r.Option.GetRounds() {
+		case 8:
+			return 6
+		case 16:
+			return 12
+		case 24:
+			return 18
+		default:
+			return math.MaxInt32
+		}
+	}else{
+		switch r.Option.GetRounds() {
+		case 8:
+			base = 6
+		case 16:
+			base = 12
+		case 24:
+			base = 18
+		default:
+			return math.MaxInt32
+		}
+		switch r.Option.GetPayMode() {
+		case 1:
+			return base * r.GetMaxNumber()
+		case 2:
+			return base
+		case 3 :
+			return  base *r.GetMaxNumber()
+		default:
+			return math.MaxInt32
+		}
 	}
 }
 
@@ -220,6 +233,10 @@ func (r *fourGrabBankerRoomT) CostDiamonds() int32 {
 	default:
 		return math.MaxInt32
 	}
+}
+
+func (r *fourGrabBankerRoomT) GetMaxNumber() int32 {
+	return r.Option.Number
 }
 
 func (r *fourGrabBankerRoomT) GetId() int32 {

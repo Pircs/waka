@@ -21,6 +21,7 @@ type fourRoomT interface {
 	GetOwner() database.Player
 	GetGaming() bool
 	GetRoundNumber() int32
+	GetMaxNumber()int32
 
 	GetPlayers() []database.Player
 

@@ -45,6 +45,10 @@ namespace WakaSDK
 
         static private void DispatchTransport(ISession ses, uint id, IMessage msg, byte[] rawData)
         {
+            if (Dispatcher == null)
+            {
+                return;
+            }
             var transport = (WakaProto.Transport)msg;
             if (!MetaTable.TryGetMessageMetaByID(transport.Id, out MessageMeta meta))
             {
@@ -55,12 +59,13 @@ namespace WakaSDK
             {
                 {{range .Receive}}
                 case "{{$.Namespace}}.{{.Type}}":
-                    Dispatcher?.Event{{.Type}}(({{$.Namespace}}.{{.Type}})message);
+                    Dispatcher.Event{{.Type}}(({{$.Namespace}}.{{.Type}})message);
                     break;
                 {{end}}
                 default:
                     break;
             }
+            return;
         }
     }
 }
@@ -150,7 +155,7 @@ namespace WakaSDK
         {
             Evq.Clear();
             ThenTable.Clear();
-            Connector.ConnectAsync(host, port);
+            Connector.Connect(host, port);
         }
 
         /// <summary>
@@ -218,6 +223,7 @@ namespace WakaSDK
                     andThen("failed: unknown response type", null);
                 }
             }
+            return;
         }
 
         static private void RedirectTransport(ISession ses, uint id, IMessage message, byte[] rawData)

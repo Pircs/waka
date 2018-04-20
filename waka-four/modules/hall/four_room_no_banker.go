@@ -140,6 +140,8 @@ type fourNoBankerRoomT struct {
 	StepSwap string
 }
 
+
+
 func (r *fourNoBankerRoomT) FourGrabOfFixedBanker(player *playerT, grab bool) {
 	panic("implement me")
 }
@@ -160,25 +162,38 @@ func (r *fourNoBankerRoomT) FourGrabAnimation() *four_proto.FourGrabAnimation {
 
 func (r *fourNoBankerRoomT) CreateDiamonds() int32 {
 	base := int32(0)
-	switch r.Option.GetRounds() {
-	case 8:
-		base = 6
-	case 16:
-		base = 12
-	case 24:
-		base = 18
-	default:
-		return math.MaxInt32
-	}
-	switch r.Option.GetPayMode() {
-	case 1:
-		return base * 8
-	case 2:
-		return base
-	case 3 :
-		return  base *8
-	default:
-		return math.MaxInt32
+	if r.Option.PayMode==2{
+		switch r.Option.GetRounds() {
+		case 8:
+			return 6
+		case 16:
+			return 12
+		case 24:
+			return 18
+		default:
+			return math.MaxInt32
+		}
+	}else{
+		switch r.Option.GetRounds() {
+		case 8:
+			base = 6
+		case 16:
+			base = 12
+		case 24:
+			base = 18
+		default:
+			return math.MaxInt32
+		}
+		switch r.Option.GetPayMode() {
+		case 1:
+			return base * r.GetMaxNumber()
+		case 2:
+			return base
+		case 3 :
+			return  base *r.GetMaxNumber()
+		default:
+			return math.MaxInt32
+		}
 	}
 }
 
@@ -197,26 +212,42 @@ func (r *fourNoBankerRoomT) LeaveDiamonds(player database.Player) int32 {
 
 func (r *fourNoBankerRoomT) CostDiamonds() int32 {
 	base := int32(0)
-	switch r.Option.GetRounds() {
-	case 8:
-		base = 6
-	case 16:
-		base = 12
-	case 24:
-		base = 18
-	default:
-		return math.MaxInt32
+	if r.Option.PayMode==2{
+		switch r.Option.GetRounds() {
+		case 8:
+			return 6
+		case 16:
+			return 12
+		case 24:
+			return 18
+		default:
+			return math.MaxInt32
+		}
+	}else{
+		switch r.Option.GetRounds() {
+		case 8:
+			base = 6
+		case 16:
+			base = 12
+		case 24:
+			base = 18
+		default:
+			return math.MaxInt32
+		}
+		switch r.Option.GetPayMode() {
+		case 1:
+			return base * r.GetMaxNumber()
+		case 2:
+			return base
+		case 3 :
+			return  base *r.GetMaxNumber()
+		default:
+			return math.MaxInt32
+		}
 	}
-	switch r.Option.GetPayMode() {
-	case 1:
-		return base * int32(len(r.Players))
-	case 2:
-		return base
-	case 3 :
-		return base *int32(len(r.Players))
-	default:
-		return math.MaxInt32
-	}
+}
+func (r *fourNoBankerRoomT) GetMaxNumber() int32 {
+	return r.Option.Number
 }
 
 func (r *fourNoBankerRoomT) GetId() int32 {
