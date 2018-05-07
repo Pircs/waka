@@ -43,7 +43,7 @@ func (g *Generator) GenerateAllFiles() {
 }
 
 func (g *Generator) printFile(f *plugin.FileDescriptor) (string, string) {
-	tpl, err := template.New("protoc-gen-cellnet").Parse(codeTemplate)//分配一个新的模板并给予名字
+	tpl, err := template.New("protoc-gen-cellnet").Parse(codeTemplate)
 	if err != nil {
 		g.Error(err, "template parse failed")
 	}

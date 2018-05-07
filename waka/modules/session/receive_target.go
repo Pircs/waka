@@ -6,7 +6,7 @@ import (
 
 	"github.com/liuhan907/waka/waka/codec"
 	"github.com/liuhan907/waka/waka/modules/session/session_message"
-	"github.com/liuhan907/waka-/waka/proto"
+	"github.com/liuhan907/waka/waka/proto"
 )
 
 func (my *actorT) ReceiveTarget(context actor.Context) bool {

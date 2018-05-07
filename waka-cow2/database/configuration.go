@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/liuhan907/waka/waka-cow2/proto"
+	"github.com/liuhan907/waka/waka-cow/proto"
 )
 
 // 系统配置
@@ -127,12 +128,12 @@ func getUrls() (map[string]string, error) {
 }
 
 func getCustomerServices() ([]*cow_proto.Welcome_Customer, error) {
-	var vals []*Configuration
-	if err := mysql.Where("type = ?", "customer_service").Find(&vals).Error; err != nil {
+	var values []*Configuration
+	if err := mysql.Where("type = ?", "customer_service").Find(&values).Error; err != nil {
 		return nil, err
 	}
 	var result []*cow_proto.Welcome_Customer
-	for _, val := range vals {
+	for _, val := range values {
 		result = append(result, &cow_proto.Welcome_Customer{
 			Name:   val.Value1,
 			Wechat: val.Value2,
@@ -142,12 +143,12 @@ func getCustomerServices() ([]*cow_proto.Welcome_Customer, error) {
 }
 
 func getMap(mapType string) (map[string]string, error) {
-	var vals []*Configuration
-	if err := mysql.Where("type = ?", mapType).Find(&vals).Error; err != nil {
+	var values []*Configuration
+	if err := mysql.Where("type = ?", mapType).Find(&values).Error; err != nil {
 		return nil, err
 	}
-	r := make(map[string]string, len(vals))
-	for _, val := range vals {
+	r := make(map[string]string, len(values))
+	for _, val := range values {
 		if val.Value1 == "" || val.Value2 == "" {
 			continue
 		}

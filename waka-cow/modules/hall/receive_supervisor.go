@@ -67,17 +67,16 @@ func (my *actorT) playerEnteredExchanged(player database.Player, remote string) 
 	players := my.players.SelectOnline()
 	playerNumber := int32(len(players))
 	my.sendHallEntered(player)
-	my.sendWelcome(player)
 	for _, player := range players {
 		my.sendPlayerNumber(player.Player, playerNumber)
 	}
-	my.sendRedUpdateRedPaperBagList(player, my.redBags)
-	my.sendLever28UpdateRedPaperBagList(player, my.lever28Bags)
+	my.sendRedUpdateBagList(player, my.redBags)
+	my.sendLever28UpdateBagList(player, my.lever28Bags)
 
 	if playerData.InsideCow != 0 {
 		room, being := my.cowRooms[playerData.InsideCow]
 		if being {
-			my.sendRecover(player, true, "cow2")
+			my.sendRecover(player, true, "cow")
 			room.Recover(playerData)
 		} else {
 			playerData.InsideCow = 0
@@ -232,7 +231,9 @@ func (my *actorT) playerFutureRequested(ev *supervisor_message.PlayerFutureReque
 		}).Warnln("player future but player not found")
 		return
 	}
-
+	if my.playerFutureRequestedPlayer(playerData,ev){
+		return
+	}
 	if my.playerFutureRequestedCow(playerData, ev) {
 		return
 	}
@@ -254,3 +255,4 @@ func (my *actorT) playerFutureRequested(ev *supervisor_message.PlayerFutureReque
 		"payload": ev.Payload.String(),
 	}).Warnln("unknown player future type")
 }
+

@@ -6,11 +6,11 @@ import (
 	"github.com/AsynkronIT/protoactor-go/actor"
 	"github.com/davyxu/cellnet"
 	"github.com/davyxu/cellnet/socket"
+	"github.com/liuhan907/waka/waka/proto"
 	"github.com/sirupsen/logrus"
 
 	"github.com/liuhan907/waka/waka/modules/gateway/gateway_message"
 	"github.com/liuhan907/waka/waka/modules/gateway/tlv"
-	"github.com/liuhan907/waka-/waka/proto"
 )
 
 var (

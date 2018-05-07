@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"os/signal"
 	"runtime"
 	"syscall"
@@ -13,6 +14,7 @@ import (
 	protolog "github.com/AsynkronIT/protoactor-go/log"
 	"github.com/davyxu/cellnet"
 	"github.com/davyxu/golog"
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 
 	"github.com/liuhan907/waka/waka-cow/backend"
@@ -35,7 +37,8 @@ var (
 )
 
 func init() {
-	logrus.SetLevel(logrus.Level(conf.Option.Log.LogLevel))
+	gin.SetMode(conf.Option.Mode.Mode)
+	logrus.SetLevel(logrus.Level(conf.Option.Log.Level))
 	golog.SetLevelByString("*", "fatal")
 	actor.SetLogLevel(protolog.OffLevel)
 }
@@ -53,11 +56,9 @@ func startGateway() {
 				TargetCreator: func() *actor.PID {
 					return target
 				},
-				Address:     conf.Option.Backend.Listen4,
-				HttpAddress: conf.Option.Backend.Http,
+				Address: conf.Option.Gateway.Backend,
 			}
 			backend.Start(backendOption)
-			backend.StartHttp(backendOption)
 		}()
 		return target
 	}
@@ -84,7 +85,7 @@ func startGateway() {
 	}
 	gatewayOption := gateway.Option{
 		TargetCreator: gatewayTargetCreator,
-		Address:       conf.Option.Gateway.Listen4,
+		Address:       conf.Option.Gateway.Gateway,
 	}
 	gateway.Start(gatewayOption)
 }
@@ -95,15 +96,15 @@ func wait() {
 			name := "kill.sh"
 			script := fmt.Sprintf("kill %v", pid)
 
-			if err := ioutil.WriteFile(name, []byte(script), 0777); err != nil {
+			if err := ioutil.WriteFile(name, []byte(script), 0755); err != nil {
 				log.WithFields(logrus.Fields{
 					"err": err,
 				}).Errorln("write kill script failed")
 			}
-			if err := os.Chmod(name, 777); err != nil {
-				log.WithFields(logrus.Fields{
-					"err": err,
-				}).Errorln("chmod kill script failed")
+
+			if err := exec.Command("/bin/sh", "-c", "chmod 0755 kill.sh").Run(); err != nil {
+				log.Printf("chmod kill script failed: %v\n", err)
+				return
 			}
 
 			defer os.Remove(name)
