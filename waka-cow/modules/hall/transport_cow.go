@@ -50,7 +50,7 @@ func (my *actorT) NiuniuCreateRoom(player *playerT, ev *cow_proto.NiuniuCreateRo
 
 	if (ev.GetType() != cow_proto.NiuniuRoomType_Order && ev.GetType() != cow_proto.NiuniuRoomType_PayForAnother) ||
 		(ev.Option.GetBanker() < 0 || ev.Option.GetBanker() > 2) ||
-		(ev.Option.GetGames() != 20 && ev.Option.GetGames() != 30 && ev.Option.GetGames() != 40 && ev.Option.GetGames() != 5) ||
+		(ev.Option.GetGames() != 2&&ev.Option.GetGames() != 20 && ev.Option.GetGames() != 30 && ev.Option.GetGames() != 40 && ev.Option.GetGames() != 5) ||
 		(ev.Option.GetMode() != 0 && ev.Option.GetMode() != 1) {
 		log.WithFields(logrus.Fields{
 			"player": player.Player,
@@ -88,7 +88,7 @@ func (my *actorT) NiuniuJoinRoom(player *playerT, ev *cow_proto.NiuniuJoinRoom) 
 		log.WithFields(logrus.Fields{
 			"player": player.Player,
 		}).Warnln("join cow room but already in room")
-		my.sendNiuniuJoinRoomFailed(player.Player, 2)
+		my.sendNiuniuJoinRoomFailed(player.Player, -1)
 		return
 	}
 
@@ -98,7 +98,7 @@ func (my *actorT) NiuniuJoinRoom(player *playerT, ev *cow_proto.NiuniuJoinRoom) 
 			"player":  player.Player,
 			"room_id": ev.GetRoomId(),
 		}).Warnln("join cow room but not found")
-		my.sendNiuniuJoinRoomFailed(player.Player, 3)
+		my.sendNiuniuJoinRoomFailed(player.Player, 1)
 		return
 	}
 

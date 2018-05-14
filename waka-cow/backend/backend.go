@@ -11,6 +11,7 @@ import (
 	"github.com/liuhan907/waka/waka-cow/database"
 	"github.com/liuhan907/waka/waka-cow/modules/hall/hall_message"
 	"github.com/liuhan907/waka/waka-cow/proto"
+	"net/http"
 )
 
 var (
@@ -44,7 +45,6 @@ func Start(option Option) {
 			return
 		}
 		database.RefreshCache(database.Player(id))
-
 		log.WithFields(logrus.Fields{
 			"id": id,
 		}).Debug("player changed")
@@ -61,7 +61,6 @@ func Start(option Option) {
 	router.GET("/room/flowing/query", func(c *gin.Context) {
 		ch := make(chan interface{})
 		defer close(ch)
-
 		target.Tell(&hall_message.GetFlowingRoom{
 			Respond: func(response []*cow_proto.NiuniuRoomData, e error) {
 				if e != nil {
@@ -72,8 +71,16 @@ func Start(option Option) {
 			},
 		})
 		response := <-ch
+		log.WithFields(logrus.Fields{
+			"response":response,
+		}).Warnln("query")
+		c.JSON(http.StatusOK,gin.H{"rooms":response})
 		switch evd := response.(type) {
 		case []map[string]interface{}:
+			log.WithFields(logrus.Fields{
+				"evd": evd[0]["Type"],
+			}).Warnln("grab lever28 but not found")
+			c.JSON(http.StatusOK,gin.H{"rooms":evd[0]["Type"]})
 			c.BindJSON(evd)
 		default:
 			c.BindJSON(
@@ -110,6 +117,7 @@ func Start(option Option) {
 		switch evd := response.(type) {
 		case []map[string]interface{}:
 			c.BindJSON(evd)
+			c.JSON(http.StatusOK,gin.H{"rooms":evd})
 		default:
 			c.BindJSON(
 				struct {
@@ -122,7 +130,6 @@ func Start(option Option) {
 	router.GET("/player/online", func(c *gin.Context) {
 		ch := make(chan interface{})
 		defer close(ch)
-
 		target.Tell(&hall_message.GetOnlinePlayer{
 			Respond: func(response []int32, e error) {
 				if e != nil {
@@ -132,10 +139,14 @@ func Start(option Option) {
 				}
 			},
 		})
+		log.WithFields(logrus.Fields{
+		}).Warnln("response := <-ch")
 		response := <-ch
 		switch evd := response.(type) {
 		case []int32:
 			c.BindJSON(evd)
+			c.JSON(http.StatusOK,gin.H{"players":evd,})
+			c.String(200, "Success")
 		default:
 			c.BindJSON(
 				struct {

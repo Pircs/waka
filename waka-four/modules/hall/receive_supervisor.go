@@ -141,6 +141,7 @@ func (my *actorT) playerTransported(ev *supervisor_message.PlayerTransported) {
 		return
 	}
 
+	
 	if my.playerTransportedFour(playerData, ev) {
 		return
 	}

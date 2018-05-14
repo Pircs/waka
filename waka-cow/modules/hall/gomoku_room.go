@@ -172,7 +172,9 @@ func (r *gomokuRoomT) Start(player *playerT) {
 	if r.Student == nil {
 		return
 	}
-
+	if r.Cost==0{
+		return
+	}
 	r.Loop = r.loopStart
 
 	r.loop()

@@ -52,7 +52,6 @@ func (my *actorT) playerEnteredExchanged(player database.Player, remote string) 
 	if lines := strings.Split(remote, ":"); len(lines) == 2 {
 		remote = lines[0]
 	}
-
 	playerData, being := my.players[player]
 	if !being {
 		playerData = &playerT{
@@ -203,7 +202,6 @@ func (my *actorT) playerTransported(ev *supervisor_message.PlayerTransported) {
 	if my.playerTransportedGomoku(playerData, ev) {
 		return
 	}
-
 	log.WithFields(logrus.Fields{
 		"player":  ev.Player,
 		"type":    reflect.TypeOf(ev.Payload).Elem().Name(),

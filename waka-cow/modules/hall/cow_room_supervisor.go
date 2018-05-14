@@ -115,7 +115,7 @@ func (r *supervisorRoomT) JoinMoney() int32 {
 }
 
 func (r *supervisorRoomT) StartMoney() int32 {
-	return 0
+	return r.Option.GetScore()*100
 }
 
 func (r *supervisorRoomT) GetType() cow_proto.NiuniuRoomType {
@@ -309,21 +309,20 @@ func (r *supervisorRoomT) JoinRoom(player *playerT) {
 		r.Hall.sendNiuniuJoinRoomFailed(player.Player, 1)
 		return
 	}
-
 	_, being := r.Players[player.Player]
 	if being {
-		r.Hall.sendNiuniuJoinRoomFailed(player.Player, -1)
+		r.Hall.sendNiuniuJoinRoomFailed(player.Player, 0)
 		return
 	}
 
-	if r.Gaming {
+	if player.InsideCow!=0 {
 		r.Hall.sendNiuniuJoinRoomFailed(player.Player, 2)
 		return
 	}
 
 	seat, has := r.Seats.Acquire()
 	if !has {
-		r.Hall.sendNiuniuJoinRoomFailed(player.Player, 0)
+		r.Hall.sendNiuniuJoinRoomFailed(player.Player, 3)
 		return
 	}
 
@@ -350,9 +349,7 @@ func (r *supervisorRoomT) LeaveRoom(player *playerT) {
 			player.InsideCow = 0
 			delete(r.Players, player.Player)
 			r.Seats.Return(roomPlayer.Pos)
-
 			r.Hall.sendNiuniuLeftRoom(player.Player, 1)
-
 			if r.Owner == player.Player {
 				r.Owner = 0
 				if len(r.Players) > 0 {
@@ -592,9 +589,6 @@ func (r *supervisorRoomT) loopGrabSelect() bool {
 	} else {
 		r.Banker = r.Owner
 
-		log.WithFields(logrus.Fields{
-			"banker": r.Banker,
-		}).Debugln("no player grab")
 	}
 
 	r.Hall.sendNiuniuUpdateRoundForAll(r)
@@ -687,10 +681,11 @@ func (r *supervisorRoomT) loopDeal1() bool {
 
 	r.loop = r.loopCommitPokersContinue
 	r.tick = buildTickAfter(
-		3,
+		4,
 		func(deadline int64) {
 		},
 		func(deadline int64) {
+
 			r.Hall.sendNiuniuDeadlineForAll(r, deadline)
 		},
 		func() {
@@ -775,18 +770,21 @@ func (r *supervisorRoomT) loopSettle() bool {
 				Victory: player.Player,
 				Loser:   banker.Player,
 				Number:  player.Round.Points * 100,
+				RoomCost:  r.Option.Score * 100,
 			}
 		} else {
 			c = &database.CowFlowingCostData{
 				Victory: banker.Player,
 				Loser:   player.Player,
 				Number:  player.Round.Points * 100 * (-1),
+				RoomCost:  r.Option.Score * 100,
 			}
 		}
 		costs = append(costs, c)
+
 	}
 	err := database.CowFlowingCostSettle(costs)
-	if err != nil {
+	if err !=nil {
 		log.WithFields(logrus.Fields{
 			"room_id": r.Id,
 			"mode":    r.Option.GetMode(),
@@ -795,7 +793,6 @@ func (r *supervisorRoomT) loopSettle() bool {
 			"err":     err,
 		}).Warnln("supervisor cost failed")
 	}
-
 	clear := r.NiuniuRoundClear()
 	for _, player := range r.Players {
 		if err := database.CowAddFlowingHistory(player.Player, r.Id, clear); err != nil {

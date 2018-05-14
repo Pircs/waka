@@ -8,6 +8,7 @@ import (
 	"github.com/liuhan907/waka/waka-cow/proto"
 	"github.com/liuhan907/waka/waka/modules/session/session_message"
 	"github.com/liuhan907/waka/waka/modules/supervisor/supervisor_message"
+	"github.com/sirupsen/logrus"
 )
 
 func (my *actorT) ReceiveSession(context actor.Context) bool {
@@ -29,6 +30,8 @@ func (my *actorT) ReceiveSession(context actor.Context) bool {
 func (my *actorT) closed(ev *session_message.Closed) {
 	if my.player != 0 {
 		my.hall.Tell(&supervisor_message.PlayerLeave{uint64(my.player)})
+		log.WithFields(logrus.Fields{
+		}).Debugln("player closed")
 	}
 }
 

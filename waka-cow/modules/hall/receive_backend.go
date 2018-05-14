@@ -28,6 +28,7 @@ func (my *actorT) GetFlowingRoom(evd *hall_message.GetFlowingRoom) {
 }
 
 func (my *actorT) GetPlayerRoom(evd *hall_message.GetPlayerRoom) {
+
 	r := my.cowRooms.WherePlayer()
 	if evd.Player != 0 {
 		r = r.WhereCreator(evd.Player)
@@ -36,6 +37,7 @@ func (my *actorT) GetPlayerRoom(evd *hall_message.GetPlayerRoom) {
 }
 
 func (my *actorT) GetOnlinePlayer(evd *hall_message.GetOnlinePlayer) {
+
 	var r []int32
 	linq.From(my.players.SelectOnline()).SelectT(func(in linq.KeyValue) int32 {
 		return int32(in.Key.(database.Player))

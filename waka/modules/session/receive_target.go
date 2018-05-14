@@ -29,7 +29,6 @@ func (my *actorT) close() {
 			"pid": my.pid.String(),
 		}).Debugln("target request close session")
 	}
-
 	my.conn.Close()
 }
 
