@@ -174,7 +174,8 @@ namespace WakaSDK
         {
             if ((long)((DateTime.UtcNow - LastRemoteHeartTime).TotalSeconds) >= 10)
             {
-                Close();
+               // Close();
+				print("链接断了时间"+(DateTime.UtcNow - LastRemoteHeartTime).TotalSeconds)
             }
             if ((long)((DateTime.UtcNow - LastLocalHeartTime).TotalSeconds) >= 3)
             {
