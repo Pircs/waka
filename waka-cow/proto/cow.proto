@@ -59,6 +59,8 @@ message LoginFailed {
 message LoginSuccess {
     // 登录令牌
     string token = 1;
+    // 玩家 ID
+    int32 player = 2;
 }
 
 // --------------------------------------↑登陆消息↑-----------------------------------------
@@ -432,8 +434,17 @@ message NiuniuRoundStarted {
 // @comments 操作结束时间
 // @receive
 message NiuniuDeadline {
+    // ID
+    int64 id = 1;
     // 时间戳
-    int64 stamp = 1;
+    int64 stamp = 2;
+}
+
+// @comments 取消定时
+// @receive
+message NiuniuCancelDeadline {
+    // ID
+    int64 id = 1;
 }
 
 // @comments 继续
@@ -715,8 +726,10 @@ message RedLeave {}
 // @comments 红包销毁时间
 // @receive
 message RedDeadline {
+    // ID
+    int64 id = 1;
     // 时间戳
-    int64 stamp = 1;
+    int64 stamp = 2;
 }
 
 // @comments 红包详情刷新
@@ -881,8 +894,10 @@ message Lever28Leave {}
 // @comments 红包销毁时间
 // @receive
 message Lever28Deadline {
+    // ID
+    int64 id = 1;
     // 时间戳
-    int64 stamp = 1;
+    int64 stamp = 2;
 }
 
 // @comments 红包详情刷新
@@ -1081,10 +1096,12 @@ message GomokuRequirePlay {
 // @comments 走棋倒计时
 // @receive
 message GomokuUpdatePlayDeadline {
+    // ID
+    int64 id = 1;
     // 时间戳
-    int64 stamp = 1;
+    int64 stamp = 2;
     // 是否是自己
-    bool is = 2;
+    bool is = 3;
 }
 
 // @comments 走棋

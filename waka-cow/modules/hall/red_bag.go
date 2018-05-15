@@ -157,7 +157,7 @@ func (bag *redBagT) Left(player database.Player) {}
 
 func (bag *redBagT) Recover(player database.Player) {
 	bag.Hall.sendRedGrabSuccess(player)
-	bag.Hall.sendRedDeadline(player, bag.DeadAt.Unix())
+	bag.Hall.sendRedDeadline(player, int64(bag.Id),bag.DeadAt.Unix())
 	bag.Hall.sendRedUpdateBag(player, bag)
 }
 
@@ -279,7 +279,7 @@ func (bag *redBagT) Grab(player *playerT) {
 		player.InsideRed = bag.Id
 
 		bag.Hall.sendRedGrabSuccess(player.Player)
-		bag.Hall.sendRedDeadline(player.Player, bag.DeadAt.Unix())
+		bag.Hall.sendRedDeadline(player.Player,int64(bag.Id), bag.DeadAt.Unix())
 		bag.Hall.sendRedUpdateBagForAll(bag)
 		for _, player := range bag.Hall.players.SelectOnline() {
 			bag.Hall.sendRedUpdateBagList(player.Player, bag.Hall.redBags)

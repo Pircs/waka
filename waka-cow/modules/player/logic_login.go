@@ -66,7 +66,7 @@ func (my *actorT) wechatLogin(ev *cow_proto.WechatLogin) {
 	}
 
 	my.hall.Tell(&supervisor_message.PlayerEnter{my.pid, uint64(my.player), my.remote})
-	my.conn.Tell(&session_message.Send{&cow_proto.LoginSuccess{token}})
+	my.conn.Tell(&session_message.Send{&cow_proto.LoginSuccess{token,int32(player.Id)}})
 
 	my.log.WithFields(logrus.Fields{
 		"union_id": ev.GetWechatUid(),
@@ -104,7 +104,7 @@ func (my *actorT) tokenLogin(ev *cow_proto.TokenLogin) {
 		my.player = player.Id
 
 		my.hall.Tell(&supervisor_message.PlayerEnter{my.pid, uint64(my.player), my.remote})
-		my.conn.Tell(&session_message.Send{&cow_proto.LoginSuccess{ev.GetToken()}})
+		my.conn.Tell(&session_message.Send{&cow_proto.LoginSuccess{ev.GetToken(),int32(player.Id)}})
 
 		my.log.WithFields(logrus.Fields{
 			"union_id": player.WechatUnionid,
