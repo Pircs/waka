@@ -43,7 +43,6 @@ func (my *actorT) NiuniuQueryPayForAnotherRoomListRequest(player *playerT,
 func (my *actorT) NiuniuQueryFlowingRoomListRequest(player *playerT,
 	ev *cow_proto.NiuniuQueryFlowingRoomListRequest,
 	respond func(proto.Message, error)) {
-
 	rooms := my.cowRooms.
 		WhereFlowing().
 		WhereReady()
@@ -65,6 +64,5 @@ func (my *actorT) NiuniuQueryHistoryRequest(player *playerT,
 		respond(nil, err)
 		return
 	}
-
 	respond(&cow_proto.NiuniuQueryHistoryResponse{records}, nil)
 }

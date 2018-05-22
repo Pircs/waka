@@ -33,6 +33,10 @@ func (my *actorT) playerTransportedCow(player *playerT, ev *supervisor_message.P
 		my.NiuniuCommitPokers(player, evd)
 	case *cow_proto.NiuniuContinueWith:
 		my.NiuniuContinueWith(player, evd)
+	case *cow_proto.NiuniuSwitchToBackground:
+		my.NiuniuSwitchToBackground(player, evd)
+	case *cow_proto.NiuniuSwitchToForeground:
+		my.NiuniuSwitchToForeground(player, evd)
 	default:
 		return false
 	}
@@ -50,7 +54,7 @@ func (my *actorT) NiuniuCreateRoom(player *playerT, ev *cow_proto.NiuniuCreateRo
 
 	if (ev.GetType() != cow_proto.NiuniuRoomType_Order && ev.GetType() != cow_proto.NiuniuRoomType_PayForAnother) ||
 		(ev.Option.GetBanker() < 0 || ev.Option.GetBanker() > 2) ||
-		(ev.Option.GetGames() != 2&&ev.Option.GetGames() != 20 && ev.Option.GetGames() != 30 && ev.Option.GetGames() != 40 && ev.Option.GetGames() != 5) ||
+		(ev.Option.GetGames() != 20 && ev.Option.GetGames() != 30 && ev.Option.GetGames() != 40 && ev.Option.GetGames() != 5) ||
 		(ev.Option.GetMode() != 0 && ev.Option.GetMode() != 1) {
 		log.WithFields(logrus.Fields{
 			"player": player.Player,
@@ -308,4 +312,60 @@ func (my *actorT) NiuniuContinueWith(player *playerT, ev *cow_proto.NiuniuContin
 	}
 
 	room.ContinueWith(player)
+}
+func (my *actorT) NiuniuSwitchToBackground(player *playerT, ev *cow_proto.NiuniuSwitchToBackground) {
+	log.WithFields(logrus.Fields{
+		"player": player.Player,
+	}).Debugln("player to background")
+
+	playerData, being := my.players[player.Player]
+	if !being {
+		log.WithFields(logrus.Fields{
+			"player": player.Player,
+		}).Warnln("player to background but player not found")
+		return
+	}
+
+	if playerData.InsideCow != 0 {
+		room, being := my.cowRooms[playerData.InsideCow]
+		if being {
+			room.Left(playerData)
+		} else {
+			playerData.InsideCow = 0
+		}
+	}
+	players := my.players.SelectOnline()
+	playerNumber := int32(len(players))
+	for _, player := range players {
+		my.sendPlayerNumber(player.Player, playerNumber)
+	}
+}
+func (my *actorT) NiuniuSwitchToForeground(player *playerT, ev *cow_proto.NiuniuSwitchToForeground) {
+	playerData, being := my.players[player.Player]
+	if !being {
+		log.WithFields(logrus.Fields{
+			"player": player.Player,
+		}).Warnln("player to foreground but player not found")
+		return
+	}
+
+	players := my.players.SelectOnline()
+	playerNumber := int32(len(players))
+	my.sendHallEntered(player.Player)
+	for _, player := range players {
+		my.sendPlayerNumber(player.Player, playerNumber)
+	}
+
+	if playerData.InsideCow != 0 {
+		room, being := my.cowRooms[playerData.InsideCow]
+		if being {
+			my.sendNiuniuUpdateRoom(player.Player, room)
+			my.sendNiuniuUpdateRound(player.Player, room)
+		} else {
+			playerData.InsideCow = 0
+			my.sendRecover(player.Player, false, "")
+		}
+	} else {
+		my.sendRecover(player.Player, false, "")
+	}
 }

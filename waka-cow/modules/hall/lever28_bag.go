@@ -131,7 +131,7 @@ func (bag *lever28BagT) Left(player database.Player) {}
 
 func (bag *lever28BagT) Recover(player database.Player) {
 	bag.Hall.sendLever28GrabSuccess(player)
-	bag.Hall.sendLever28Deadline(player,int64(bag.Id), bag.DeadAt.Unix())
+	bag.Hall.sendLever28Deadline(player, bag.DeadAt.Unix(), bag.DeadAt.Unix())
 	bag.Hall.sendLever28UpdateBag(player, bag)
 }
 
@@ -211,6 +211,7 @@ func (bag *lever28BagT) Grab(player *playerT) {
 	if being {
 		player.InsideLever28 = bag.Id
 		bag.Hall.sendLever28GrabSuccess(player.Player)
+		bag.Hall.sendLever28Deadline(player.Player, bag.DeadAt.Unix(), bag.DeadAt.Unix())
 		bag.Hall.sendLever28UpdateBag(player.Player, bag)
 	} else {
 		var freeze database.Freeze
@@ -264,7 +265,7 @@ func (bag *lever28BagT) Grab(player *playerT) {
 		player.InsideLever28 = bag.Id
 
 		bag.Hall.sendLever28GrabSuccess(player.Player)
-		bag.Hall.sendLever28Deadline(player.Player,int64(bag.Id), bag.DeadAt.Unix())
+		bag.Hall.sendLever28Deadline(player.Player, bag.DeadAt.Unix(), bag.DeadAt.Unix())
 		bag.Hall.Lever28UpdateBagForAll(bag)
 		for _, player := range bag.Hall.players.SelectOnline() {
 			bag.Hall.sendLever28UpdateBagList(player.Player, bag.Hall.lever28Bags)

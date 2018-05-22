@@ -278,6 +278,8 @@ message NiuniuRoomData {
     int32 join_money = 7;
     // 是否游戏中
     bool gaming = 8;
+    //模式
+    string GameMode =9;
 }
 
 // @comments 查询代开房间
@@ -434,10 +436,9 @@ message NiuniuRoundStarted {
 // @comments 操作结束时间
 // @receive
 message NiuniuDeadline {
-    // ID
+    // 倒计时
     int64 id = 1;
-    // 时间戳
-    int64 stamp = 2;
+
 }
 
 // @comments 取消定时
@@ -642,6 +643,14 @@ message NiuniuGameFinally {
     string finally_at = 2;
 }
 
+// @comments 牛牛切换到后台
+// @post
+message NiuniuSwitchToBackground {}
+
+// @comments 牛牛切换到前台
+// @postclear
+message NiuniuSwitchToForeground {}
+
 // --------------------------------------↑牛牛↑-----------------------------------------
 
 // @comments 红包配置
@@ -815,6 +824,7 @@ message RedGetHistoryResponse {
     repeated RedBagClear hands = 2;
 }
 
+
 // --------------------------------------↑红包↑-----------------------------------------
 
 // @comments 红包配置
@@ -968,6 +978,7 @@ message Lever28GetHistoryResponse {
     // 我发的
     repeated Lever28BagClear hands = 2;
 }
+
 
 // @comments --------------------------------------↑二八杠↑-----------------------------------------
 
@@ -1143,5 +1154,13 @@ message GomokuGetHistoryResponse {
     // 结果
     repeated GomokuHistory histories = 1;
 }
+// @comments 红包切换到后台
+// @post
+message GomokuSwitchToBackground {}
+
+// @comments 红包切换到前台
+// @post
+message GomokuSwitchToForeground {}
 
 // --------------------------------------↑五子棋↑-----------------------------------------
+

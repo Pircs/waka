@@ -47,6 +47,8 @@ type supervisorRoundPlayerT struct {
 	PokersPattern string
 	// 本回合牌型倍率
 	PokersRate int32
+	//是否离开
+	IsLeave bool
 }
 
 type supervisorPlayerT struct {
@@ -108,14 +110,14 @@ func (r *supervisorRoomT) CreateMoney() int32 {
 
 func (r *supervisorRoomT) JoinMoney() int32 {
 	if r.Option.GetMode() == 0 {
-		return cow.NormalMaxRate * 5 * r.Option.GetScore() * 3
+		return cow.NormalMaxRate * 5 * r.Option.GetScore()
 	} else {
-		return cow.CrazyMaxRate * 5 * r.Option.GetScore() * 3
+		return cow.CrazyMaxRate * 5 * r.Option.GetScore()
 	}
 }
 
 func (r *supervisorRoomT) StartMoney() int32 {
-	return r.Option.GetScore()*100
+	return r.Option.GetScore() * 100
 }
 
 func (r *supervisorRoomT) GetType() cow_proto.NiuniuRoomType {
@@ -315,7 +317,7 @@ func (r *supervisorRoomT) JoinRoom(player *playerT) {
 		return
 	}
 
-	if player.InsideCow!=0 {
+	if player.InsideCow != 0 {
 		r.Hall.sendNiuniuJoinRoomFailed(player.Player, 2)
 		return
 	}
@@ -359,13 +361,15 @@ func (r *supervisorRoomT) LeaveRoom(player *playerT) {
 					}
 				}
 			}
-
 			r.Hall.sendNiuniuUpdateRoomForAll(r)
-
 			if len(r.Players) < 2 {
 				r.tick = nil
 			}
 		}
+	} else {
+		player := r.Players[player.Player]
+		player.Round.IsLeave = true
+		r.Hall.sendNiuniuLeftRoom(player.Player, 1)
 	}
 }
 
@@ -479,12 +483,10 @@ func (r *supervisorRoomT) loopGrab() bool {
 	r.Hall.sendNiuniuUpdateRoundForAll(r)
 
 	r.loop = r.loopGrabContinue
-	r.tick = buildTickAfter(
+	r.tick = buildTickNumber(
 		6,
-		func(deadline int64) {
-		},
-		func(deadline int64) {
-			r.Hall.sendNiuniuDeadlineForAll(r, deadline)
+		func(number int64) {
+			r.Hall.sendNiuniuDeadlineForAll(r, number)
 		},
 		func() {
 			for _, player := range r.Players {
@@ -493,10 +495,10 @@ func (r *supervisorRoomT) loopGrab() bool {
 					player.Round.GrabCommitted = true
 				}
 			}
+
 		},
 		r.Loop,
 	)
-
 	return true
 }
 
@@ -532,20 +534,19 @@ func (r *supervisorRoomT) loopGrabAnimation() bool {
 	r.Hall.sendNiuniuUpdateRoundForAll(r)
 
 	r.loop = r.loopGrabAnimationContinue
-	r.tick = buildTickAfter(
+	r.tick = buildTickNumber(
 		8,
-		func(deadline int64) {
-		},
-		func(deadline int64) {
+		func(number int64) {
+			r.Hall.sendNiuniuDeadlineForAll(r, number)
 		},
 		func() {
 			for _, player := range r.Players {
 				player.Round.ContinueWithCommitted = true
 			}
+
 		},
 		r.Loop,
 	)
-
 	return true
 }
 
@@ -611,12 +612,10 @@ func (r *supervisorRoomT) loopSpecifyRate() bool {
 	r.Hall.sendNiuniuUpdateRoundForAll(r)
 
 	r.loop = r.loopSpecifyRateContinue
-	r.tick = buildTickAfter(
+	r.tick = buildTickNumber(
 		5,
-		func(deadline int64) {
-		},
-		func(deadline int64) {
-			r.Hall.sendNiuniuDeadlineForAll(r, deadline)
+		func(number int64) {
+			r.Hall.sendNiuniuDeadlineForAll(r, number)
 		},
 		func() {
 			for _, player := range r.Players {
@@ -625,10 +624,12 @@ func (r *supervisorRoomT) loopSpecifyRate() bool {
 					player.Round.RateCommitted = true
 				}
 			}
+			//r.Hall.sendNiuniuUpdateRoomForAll(r)
+			//r.Hall.sendNiuniuUpdateRoundForAll(r)
+
 		},
 		r.Loop,
 	)
-
 	return true
 }
 
@@ -680,22 +681,20 @@ func (r *supervisorRoomT) loopDeal1() bool {
 	r.Hall.sendNiuniuUpdateRoundForAll(r)
 
 	r.loop = r.loopCommitPokersContinue
-	r.tick = buildTickAfter(
-		4,
-		func(deadline int64) {
-		},
-		func(deadline int64) {
 
-			r.Hall.sendNiuniuDeadlineForAll(r, deadline)
+	r.tick = buildTickNumber(
+		4,
+		func(number int64) {
+			r.Hall.sendNiuniuDeadlineForAll(r, number)
 		},
 		func() {
 			for _, player := range r.Players {
 				player.Round.PokersCommitted = true
 			}
+
 		},
 		r.Loop,
 	)
-
 	return true
 }
 
@@ -763,28 +762,30 @@ func (r *supervisorRoomT) loopSettle() bool {
 	}
 
 	var costs []*database.CowFlowingCostData
-	for _, player := range players {
+	for _, player := range r.Players {
 		var c *database.CowFlowingCostData
 		if player.Round.Points > 0 {
 			c = &database.CowFlowingCostData{
-				Victory: player.Player,
-				Loser:   banker.Player,
-				Number:  player.Round.Points * 100,
-				RoomCost:  r.Option.Score * 100,
+				Victory:  player.Player,
+				Loser:    banker.Player,
+				Player:   player.Player,
+				Number:   player.Round.Points * 100,
+				RoomCost: r.Option.Score * 100,
 			}
 		} else {
 			c = &database.CowFlowingCostData{
-				Victory: banker.Player,
-				Loser:   player.Player,
-				Number:  player.Round.Points * 100 * (-1),
-				RoomCost:  r.Option.Score * 100,
+				Victory:  banker.Player,
+				Loser:    player.Player,
+				Player:   player.Player,
+				Number:   player.Round.Points * 100 * (-1),
+				RoomCost: r.Option.Score * 100,
 			}
 		}
 		costs = append(costs, c)
 
 	}
 	err := database.CowFlowingCostSettle(costs)
-	if err !=nil {
+	if err != nil {
 		log.WithFields(logrus.Fields{
 			"room_id": r.Id,
 			"mode":    r.Option.GetMode(),
@@ -817,11 +818,11 @@ func (r *supervisorRoomT) loopSettleSuccess() bool {
 	r.Hall.sendNiuniuUpdateRoundForAll(r)
 
 	r.loop = r.loopSettleSuccessContinue
-	r.tick = buildTickAfter(
-		8,
-		func(deadline int64) {
-		},
-		func(deadline int64) {
+
+	r.tick = buildTickNumber(
+		5,
+		func(number int64) {
+			r.Hall.sendNiuniuDeadlineForAll(r, number)
 		},
 		func() {
 			for _, player := range r.Players {
@@ -830,7 +831,6 @@ func (r *supervisorRoomT) loopSettleSuccess() bool {
 		},
 		r.Loop,
 	)
-
 	return true
 }
 
@@ -872,6 +872,16 @@ func (r *supervisorRoomT) loopClean() bool {
 			r.Seats.Return(player.Pos)
 			r.Hall.players[player.Player].InsideCow = 0
 			r.Hall.sendNiuniuLeftRoom(player.Player, 3)
+		}
+	}
+	for _, player := range r.Players {
+		if player.Round.IsLeave {
+			r.Hall.players[player.Player].InsideCow = 0
+			delete(r.Players, player.Player)
+			r.Seats.Return(player.Pos)
+			/*			if len(r.Players) < 2 {
+						r.tick = nil
+					}*/
 		}
 	}
 	for _, player := range r.Players {

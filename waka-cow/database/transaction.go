@@ -78,7 +78,7 @@ func buildTransaction(modifies []*modifyMoneyAction, transaction *playerTransact
 		(transaction.EnableTip && (transaction.Loss < 0 || transaction.Loss > 1)) {
 		return modifies
 	}
-	uuid,_:=uuid.NewV4()
+	uuid, _ := uuid.NewV4()
 	modifies = append(modifies, &modifyMoneyAction{
 		Player: transaction.Payer,
 		Number: transaction.Number * (-1),
@@ -113,7 +113,6 @@ func buildTransaction(modifies []*modifyMoneyAction, transaction *playerTransact
 			Player: transaction.Payee,
 			Number: number,
 		})
-
 		modifies = append(modifies, &modifyMoneyAction{
 			Player: supervisorPlayer1,
 			Number: supervisorNumber1,
@@ -122,12 +121,12 @@ func buildTransaction(modifies []*modifyMoneyAction, transaction *playerTransact
 					Player:    transaction.Payer,
 					Number:    supervisorNumber1,
 					Type:      2,
-					Agent1:supervisorPlayer1,
-					Agent2:supervisorPlayer2,
-					Agent3:supervisorPlayer3,
-					Money1:supervisorNumber1,
-					Money2:supervisorNumber2,
-					Money3:supervisorNumber3,
+					Agent1:    supervisorPlayer1,
+					Agent2:    supervisorPlayer2,
+					Agent3:    supervisorPlayer3,
+					Money1:    supervisorNumber1,
+					Money2:    supervisorNumber2,
+					Money3:    supervisorNumber3,
 					BindID:    uuid.String(),
 					Reason:    transaction.Reason + ".tip",
 					CreatedAt: time.Now(),

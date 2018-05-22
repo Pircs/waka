@@ -10,7 +10,8 @@ import (
 type playerT struct {
 	Player database.Player
 
-	Remote string
+	Remote           string
+	BackgroundRemote string
 
 	InsideCow     int32
 	InsideRed     int32

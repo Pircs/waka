@@ -99,14 +99,14 @@ func (my *actorT) GomokuJoinRoom(player *playerT, ev *cow_proto.GomokuJoinRoom) 
 		return
 	}
 
-	if player.Player.PlayerData().Money < room.Cost*100 {
+	/*	if player.Player.PlayerData().Money < room.Cost*100 {
 		log.WithFields(logrus.Fields{
 			"player": player.Player,
 			"id":     ev.GetRoomId(),
 		}).Warnln("join gomoku but money not enough")
 		my.sendGomokuJoinRoomFailed(player.Player, 2)
 		return
-	}
+	}*/
 
 	room.Join(player)
 }
@@ -151,12 +151,11 @@ func (my *actorT) GomokuSetCost(player *playerT, ev *cow_proto.GomokuSetCost) {
 		return
 	}
 
-	if room.Student != nil && room.Student.Player.PlayerData().Money < ev.GetCost()*100 {
+	if room.Creator.Player.PlayerData().Money < ev.GetCost()*100 {
 		log.WithFields(logrus.Fields{
-			"player":  player.Player,
-			"student": room.Student.Player,
-			"id":      player.InsideGomoku,
-			"cost":    ev.GetCost(),
+			"player": player.Player,
+			"id":     player.InsideGomoku,
+			"cost":   ev.GetCost(),
 		}).Warnln("set gomoku cost but student money not enough")
 		my.sendGomokuSetRoomCostFailed(player.Player, 2)
 		return

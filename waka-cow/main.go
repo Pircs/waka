@@ -75,7 +75,7 @@ func startGateway() {
 		TargetCreator:   sessionTargetCreator,
 		EnableHeart:     true,
 		EnableLog:       false,
-		EnableHeartLog:  true,
+		EnableHeartLog:  false,
 		HeartPeriod:     time.Second * 3,
 		HeartDeadPeriod: time.Second * 3 * 10,
 	}

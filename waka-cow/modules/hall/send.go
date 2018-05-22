@@ -78,8 +78,8 @@ func (my *actorT) sendNiuniuRoundStarted(player database.Player, number int32) {
 	my.send(player, &cow_proto.NiuniuRoundStarted{number})
 }
 
-func (my *actorT) sendNiuniuDeadline(player database.Player,id int64, deadline int64) {
-	my.send(player, &cow_proto.NiuniuDeadline{deadline,deadline})
+func (my *actorT) sendNiuniuDeadline(player database.Player, id int64) {
+	my.send(player, &cow_proto.NiuniuDeadline{id})
 }
 
 func (my *actorT) sendNiuniuUpdateRound(player database.Player, room cowRoom) {
@@ -150,7 +150,7 @@ func (my *actorT) sendNiuniuUpdateRoundForAll(room cowRoom) {
 
 func (my *actorT) sendNiuniuDeadlineForAll(room cowRoom, deadline int64) {
 	for _, player := range room.GetPlayers() {
-		my.sendNiuniuDeadline(player,deadline ,deadline)
+		my.sendNiuniuDeadline(player, deadline)
 	}
 }
 
@@ -176,8 +176,8 @@ func (my *actorT) sendRedGrabSuccess(player database.Player) {
 	my.send(player, &cow_proto.RedGrabSuccess{})
 }
 
-func (my *actorT) sendRedDeadline(player database.Player,id int64, deadline int64) {
-	my.send(player, &cow_proto.RedDeadline{deadline,deadline})
+func (my *actorT) sendRedDeadline(player database.Player, id int64, deadline int64) {
+	my.send(player, &cow_proto.RedDeadline{id, deadline})
 }
 
 func (my *actorT) sendRedUpdateBag(player database.Player, bag *redBagT) {
@@ -222,8 +222,8 @@ func (my *actorT) sendLever28GrabSuccess(player database.Player) {
 	my.send(player, &cow_proto.Lever28GrabSuccess{})
 }
 
-func (my *actorT) sendLever28Deadline(player database.Player,id int64, deadline int64) {
-	my.send(player, &cow_proto.Lever28Deadline{deadline,deadline})
+func (my *actorT) sendLever28Deadline(player database.Player, id int64, deadline int64) {
+	my.send(player, &cow_proto.Lever28Deadline{deadline, deadline})
 }
 
 func (my *actorT) sendLever28UpdateBag(player database.Player, bag *lever28BagT) {
@@ -284,8 +284,8 @@ func (my *actorT) sendGomokuRequirePlay(player database.Player, is bool) {
 	my.send(player, &cow_proto.GomokuRequirePlay{is})
 }
 
-func (my *actorT) sendGomokuUpdatePlayDeadline(player database.Player, id int64,deadline int64, is bool) {
-	my.send(player, &cow_proto.GomokuUpdatePlayDeadline{deadline,deadline, is})
+func (my *actorT) sendGomokuUpdatePlayDeadline(player database.Player, id int64, deadline int64, is bool) {
+	my.send(player, &cow_proto.GomokuUpdatePlayDeadline{deadline, deadline, is})
 }
 
 func (my *actorT) sendGomokuVictory(player, victory, loser database.Player) {
@@ -336,10 +336,10 @@ func (my *actorT) sendGomokuUpdateRoundForAll(room *gomokuRoomT) {
 
 func (my *actorT) sendGomokuUpdatePlayDeadlineForAll(room *gomokuRoomT, deadline int64) {
 	if room.ThisPlayer != nil {
-		my.sendGomokuUpdatePlayDeadline(room.ThisPlayer.Player,deadline, deadline, true)
+		my.sendGomokuUpdatePlayDeadline(room.ThisPlayer.Player, deadline, deadline, true)
 	}
 	if room.AnotherPlayer != nil {
-		my.sendGomokuUpdatePlayDeadline(room.AnotherPlayer.Player,deadline, deadline, false)
+		my.sendGomokuUpdatePlayDeadline(room.AnotherPlayer.Player, deadline, deadline, false)
 	}
 }
 

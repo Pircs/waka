@@ -172,7 +172,7 @@ func (r *gomokuRoomT) Start(player *playerT) {
 	if r.Student == nil {
 		return
 	}
-	if r.Cost==0{
+	if r.Cost == 0 {
 		return
 	}
 	r.Loop = r.loopStart
@@ -309,7 +309,7 @@ func (r *gomokuRoomT) loopSwitch() bool {
 func (r *gomokuRoomT) loopSettle() bool {
 	r.Hall.sendGomokuUpdateRoundForAll(r)
 
-	err := database.GomokuSettle(r.ThisPlayer.Player, r.AnotherPlayer.Player, r.Cost*100)
+	err := database.GomokuSettle(r.Creator.Player, r.Student.Player, r.Cost*100)
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"err": err,

@@ -28,11 +28,8 @@ func (my *actorT) GetFlowingRoom(evd *hall_message.GetFlowingRoom) {
 }
 
 func (my *actorT) GetPlayerRoom(evd *hall_message.GetPlayerRoom) {
-
 	r := my.cowRooms.WherePlayer()
-	if evd.Player != 0 {
-		r = r.WhereCreator(evd.Player)
-	}
+
 	evd.Respond(r.NiuniuRoomData(), nil)
 }
 
