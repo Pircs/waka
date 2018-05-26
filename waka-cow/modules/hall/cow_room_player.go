@@ -122,7 +122,7 @@ type playerRoomT struct {
 
 func (r *playerRoomT) CreateMoney() int32 {
 	if r.Type == cow_proto.NiuniuRoomType_Order {
-		return int32(float64(r.Option.GetScore())*0.3+0.5) * r.Option.GetGames()
+		return 20
 	} else if r.Type == cow_proto.NiuniuRoomType_PayForAnother {
 		return int32(float64(r.Option.GetScore())*0.3+0.5) * r.Option.GetGames() * 5
 	} else {
@@ -531,15 +531,14 @@ func (r *playerRoomT) Start(player *playerT) {
 				for _, player := range r.Players {
 					costs = append(costs, &database.CowOrderCostData{
 						Player: player.Player,
-						Number: r.StartMoney() * 100,
+						Number: r.JoinMoney() * 100,
 					})
 				}
 			} else if r.Type == cow_proto.NiuniuRoomType_PayForAnother {
 				costs = append(costs, &database.CowOrderCostData{
 					Player: r.Creator,
-					Number: r.StartMoney() * 100,
+					Number: r.JoinMoney() * 100,
 				})
-
 			} else {
 				panic("illegal room type")
 			}

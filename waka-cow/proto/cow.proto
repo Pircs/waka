@@ -1136,6 +1136,11 @@ message GomokuVictory {}
 // @receive
 message GomokuLost {}
 
+// @comments 金币不足
+// @receive
+message GomokuMoneyNoEnough{
+}
+
 // @comments 五子棋战绩
 message GomokuHistory {
     // 对手玩家

@@ -35,12 +35,11 @@ func (my playerMap) SelectOnline() playerMap {
 
 func (my *actorT) ToPlayer(player database.Player) (pb *cow_proto.Player) {
 	pb = &cow_proto.Player{}
-
 	playerData := player.PlayerData()
 	pb.Id = int32(playerData.Id)
 	pb.Nickname = playerData.Nickname
 	pb.Head = playerData.Head
-	pb.Money = playerData.Money / 100
+	pb.Money = playerData.Money
 	pb.Vip = int64(playerData.Vip.Sub(time.Now()).Seconds() / (24 * 60 * 60))
 	pb.Wechat = playerData.Wechat
 
@@ -66,11 +65,10 @@ func (my *actorT) ToPlayerSecret(player database.Player) (pb *cow_proto.PlayerSe
 	pb.Wechat = playerData.Wechat
 	pb.Idcard = playerData.Idcard
 	pb.Name = playerData.Name
-	pb.Money = playerData.Money / 100
+	pb.Money = playerData.Money
 	pb.Vip = int64(playerData.Vip.Sub(time.Now()).Seconds() / (24 * 60 * 60))
 	pb.Supervisor = int32(playerData.Supervisor)
 	pb.CreatedAt = playerData.CreatedAt.Format("2006-01-02 15:04:05")
-
 	localPlayer, being := my.players[player]
 	if being {
 		pb.Ip = localPlayer.Remote

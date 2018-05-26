@@ -624,9 +624,6 @@ func (r *supervisorRoomT) loopSpecifyRate() bool {
 					player.Round.RateCommitted = true
 				}
 			}
-			//r.Hall.sendNiuniuUpdateRoomForAll(r)
-			//r.Hall.sendNiuniuUpdateRoundForAll(r)
-
 		},
 		r.Loop,
 	)
@@ -770,7 +767,7 @@ func (r *supervisorRoomT) loopSettle() bool {
 				Loser:    banker.Player,
 				Player:   player.Player,
 				Number:   player.Round.Points * 100,
-				RoomCost: r.Option.Score * 100,
+				RoomCost: int32(float64(r.Option.GetScore()*100) * 0.3),
 			}
 		} else {
 			c = &database.CowFlowingCostData{
@@ -778,11 +775,32 @@ func (r *supervisorRoomT) loopSettle() bool {
 				Loser:    player.Player,
 				Player:   player.Player,
 				Number:   player.Round.Points * 100 * (-1),
-				RoomCost: r.Option.Score * 100,
+				RoomCost: int32(float64(r.Option.GetScore()*100) * 0.3),
 			}
+
+			/*		} else if player.Round.Points < 0 && player.Player != r.Banker {
+						c = &database.CowFlowingCostData{
+							Victory:  banker.Player,
+							Loser:    player.Player,
+							Player:   player.Player,
+							Number:   player.Round.Points * 100 * (-1),
+							RoomCost: int32(float64(r.Option.GetScore())*0.3 + 0.5),
+						}
+					} else if player.Round.Points < 0 && player.Player == r.Banker {
+						c = &database.CowFlowingCostData{
+							Victory:  100000,
+							Loser:    player.Player,
+							Player:   player.Player,
+							Number:   player.Round.Points * 100 * (-1),
+							RoomCost: int32(float64(r.Option.GetScore())*0.3 + 0.5),
+						}*/
 		}
 		costs = append(costs, c)
+		log.WithFields(logrus.Fields{
 
+			"id":    player.Player,
+			"point": player.Round.Points,
+		}).Warnln("settle")
 	}
 	err := database.CowFlowingCostSettle(costs)
 	if err != nil {
@@ -820,9 +838,9 @@ func (r *supervisorRoomT) loopSettleSuccess() bool {
 	r.loop = r.loopSettleSuccessContinue
 
 	r.tick = buildTickNumber(
-		5,
+		3,
 		func(number int64) {
-			r.Hall.sendNiuniuDeadlineForAll(r, number)
+			//r.Hall.sendNiuniuDeadlineForAll(r, number)
 		},
 		func() {
 			for _, player := range r.Players {
@@ -867,7 +885,7 @@ func (r *supervisorRoomT) loopClean() bool {
 		}
 	}
 	for _, player := range r.Players {
-		if playerData := player.Player.PlayerData(); playerData.Money < r.JoinMoney()*100 || playerData.Money < r.StartMoney()*100 {
+		if playerData := player.Player.PlayerData(); playerData.Money < r.JoinMoney()*100 { /*|| playerData.Money < r.StartMoney()*100 */
 			delete(r.Players, player.Player)
 			r.Seats.Return(player.Pos)
 			r.Hall.players[player.Player].InsideCow = 0

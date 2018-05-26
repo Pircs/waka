@@ -4,12 +4,11 @@ import (
 	"math"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	"gopkg.in/ahmetb/go-linq.v3"
-
 	"github.com/liuhan907/waka/waka-cow/database"
 	"github.com/liuhan907/waka/waka-cow/modules/hall/tools/red"
 	"github.com/liuhan907/waka/waka-cow/proto"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/ahmetb/go-linq.v3"
 )
 
 const (
@@ -389,7 +388,7 @@ func (bag *redBagT) settle() {
 		}
 
 		log.WithFields(logrus.Fields{
-			"id": bag.Id,
+			"bag.Creator.Player": bag.Creator.Player,
 		}).Debugln("settled")
 	}
 

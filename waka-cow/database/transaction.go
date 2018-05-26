@@ -72,6 +72,13 @@ type playerTransaction struct {
 }
 
 func buildTransaction(modifies []*modifyMoneyAction, transaction *playerTransaction) []*modifyMoneyAction {
+
+	/*	log.WithFields(logrus.Fields{
+		"Payer":  transaction.Payer,
+		"Payee":  transaction.Payee,
+		"Number": transaction.Number,
+	}).Warnln("buildTransaction ")*/
+
 	if transaction.Payer < DefaultSupervisor ||
 		transaction.Payee < DefaultSupervisor ||
 		transaction.Number <= 0 ||
@@ -80,6 +87,7 @@ func buildTransaction(modifies []*modifyMoneyAction, transaction *playerTransact
 	}
 	uuid, _ := uuid.NewV4()
 	modifies = append(modifies, &modifyMoneyAction{
+
 		Player: transaction.Payer,
 		Number: transaction.Number * (-1),
 		After: func(ts *gorm.DB, self *modifyMoneyAction) error {
@@ -97,6 +105,10 @@ func buildTransaction(modifies []*modifyMoneyAction, transaction *playerTransact
 			return nil
 		},
 	})
+	/*	log.WithFields(logrus.Fields{
+		"Payer":  transaction.Payer,
+		"number": transaction.Number,
+	}).Warnln("Payer")*/
 	if transaction.EnableTip {
 
 		supervisorPlayer1 := transaction.Payer.PlayerData().Supervisor
@@ -113,6 +125,7 @@ func buildTransaction(modifies []*modifyMoneyAction, transaction *playerTransact
 			Player: transaction.Payee,
 			Number: number,
 		})
+
 		modifies = append(modifies, &modifyMoneyAction{
 			Player: supervisorPlayer1,
 			Number: supervisorNumber1,

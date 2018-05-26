@@ -362,7 +362,6 @@ func (bag *lever28BagT) settle() {
 		} else if banker.Grab < player.Grab {
 			player.Get = player.Get + bag.Option.Money
 			banker.Pay = banker.Pay + bag.Option.Money
-
 			costs.Pays = append(costs.Pays, &database.Lever28Pay{
 				Payer:  banker.Player,
 				Payee:  player.Player,

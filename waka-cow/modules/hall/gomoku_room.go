@@ -197,18 +197,21 @@ func (r *gomokuRoomT) Play(player *playerT, x, y int32) {
 }
 
 func (r *gomokuRoomT) Surrender(player *playerT) {
-	r.Tick = nil
-	r.Loop = r.loopSettle
-
-	if player.Player == r.Creator.Player {
-		r.ThisPlayer = r.Student
-		r.AnotherPlayer = r.Creator
+	if player.Player.PlayerData().Money/100 < r.Cost {
+		r.Hall.sendGomokuMoenyNotEnough(player.Player)
+		r.loop()
 	} else {
-		r.ThisPlayer = r.Creator
-		r.AnotherPlayer = r.Student
+		r.Tick = nil
+		r.Loop = r.loopSettle
+		if player.Player == r.Creator.Player {
+			r.ThisPlayer = r.Creator
+			r.AnotherPlayer = r.Student
+		} else {
+			r.ThisPlayer = r.Student
+			r.AnotherPlayer = r.Creator
+		}
+		r.loop()
 	}
-
-	r.loop()
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -223,11 +226,8 @@ func (r *gomokuRoomT) loopStart() bool {
 	r.RoundNumber = 1
 	r.ThisPlayer = r.Creator
 	r.AnotherPlayer = r.Student
-
 	r.Hall.sendGomokuStartedForAll(r)
-
 	r.Loop = r.loopPlay
-
 	return true
 }
 
@@ -254,7 +254,6 @@ func (r *gomokuRoomT) loopPlay() bool {
 		},
 		r.loop,
 	)
-
 	return true
 }
 
@@ -308,8 +307,7 @@ func (r *gomokuRoomT) loopSwitch() bool {
 
 func (r *gomokuRoomT) loopSettle() bool {
 	r.Hall.sendGomokuUpdateRoundForAll(r)
-
-	err := database.GomokuSettle(r.Creator.Player, r.Student.Player, r.Cost*100)
+	err := database.GomokuSettle(r.ThisPlayer.Player, r.AnotherPlayer.Player, r.Cost*100)
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"err": err,
@@ -323,17 +321,15 @@ func (r *gomokuRoomT) loopSettle() bool {
 		}).Warnln("gomoku add history failed")
 	}
 
-	r.Hall.sendGomokuVictory(r.ThisPlayer.Player, r.ThisPlayer.Player, r.AnotherPlayer.Player)
-	r.Hall.sendGomokuLost(r.AnotherPlayer.Player, r.ThisPlayer.Player, r.AnotherPlayer.Player)
+	r.Hall.sendGomokuLost(r.ThisPlayer.Player, r.ThisPlayer.Player, r.AnotherPlayer.Player)
+	r.Hall.sendGomokuVictory(r.AnotherPlayer.Player, r.ThisPlayer.Player, r.AnotherPlayer.Player)
 	delete(r.Hall.gomokuRooms, r.Id)
 	r.Hall.gomokuNumberPool.Return(r.Id)
-
 	if player := r.Hall.players[r.ThisPlayer.Player]; player != nil {
 		player.InsideGomoku = 0
 	}
 	if player := r.Hall.players[r.AnotherPlayer.Player]; player != nil {
 		player.InsideGomoku = 0
 	}
-
 	return false
 }

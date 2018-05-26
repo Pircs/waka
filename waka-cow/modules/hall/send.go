@@ -296,6 +296,10 @@ func (my *actorT) sendGomokuLost(player, victory, loser database.Player) {
 	my.send(player, &cow_proto.GomokuLost{})
 }
 
+func (my *actorT) sendGomokuMoenyNotEnough(player database.Player) {
+	my.send(player, &cow_proto.GomokuMoneyNoEnough{})
+}
+
 // ----------------------------------------------------
 
 func (my *actorT) sendGomokuUpdateRoomForAll(room *gomokuRoomT) {
